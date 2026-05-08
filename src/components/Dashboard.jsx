@@ -194,7 +194,7 @@ export default function Dashboard({ scoredBrands, statuses, onSelectBrand, onSta
   const endRow   = Math.min((safePage+1)*pageSize, sorted.length);
 
   return (
-    <div>
+    <div style={{ padding: '24px' }}>
       {/* Stat cards */}
       <div style={{ display:'flex', gap:10, marginBottom:18, flexWrap:'wrap' }}>
         {[

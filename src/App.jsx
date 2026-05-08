@@ -710,7 +710,7 @@ export default function App() {
   const onlineOthers = (Array.isArray(onlineUsers) ? onlineUsers : []).filter(u => u !== userName);
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: "'DM Mono', monospace" }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: BG, fontFamily: "'DM Mono', monospace" }}>
 
       {/* ── Header ── */}
       <header style={{
@@ -885,16 +885,16 @@ export default function App() {
       )}
 
       {/* ── Main content ── */}
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 54px)' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Content area ── */}
-        <main style={{ flex: 1, minWidth: 0, padding: page === 'dashboard' ? 0 : 0 }}>
+        <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
 
           {/* No data empty state */}
           {page === 'dashboard' && !hasData && !parsing && (
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              minHeight: 'calc(100vh - 54px)', padding: 40,
+              minHeight: '100%', padding: 40,
             }}>
               <div style={{
                 background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16,
@@ -955,6 +955,7 @@ export default function App() {
           borderLeft: `1px solid ${BORDER}`,
           background: 'rgba(8,12,18,0.6)',
           display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
         }}>
           <div style={{
             padding: '14px 16px 10px',
