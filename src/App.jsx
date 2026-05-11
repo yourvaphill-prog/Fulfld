@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Component } from 'react';
+import PPCApp from './ppc/PPCApp.jsx';
 import Papa from 'papaparse';
 import { Upload, Settings, Download, Users, X, ChevronDown, LogOut, Zap } from 'lucide-react';
 
@@ -742,6 +743,7 @@ export default function App() {
             { id: 'kpi',       label: 'KPI Settings' },
             { id: 'export',    label: 'Export' },
             { id: 'dupes',     label: 'Duplicates' },
+            { id: 'ppc',       label: 'PPC Pilot' },
           ].map(({ id, label }) => (
             <button key={id} onClick={() => setPage(id)} style={{
               background: page === id ? 'rgba(0,255,135,0.08)' : 'transparent',
@@ -885,7 +887,8 @@ export default function App() {
       )}
 
       {/* ── Main content ── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      {/* Brand Scout layout — hidden but mounted while on PPC tab to preserve state */}
+      <div style={{ display: page === 'ppc' ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Content area ── */}
         <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
@@ -975,6 +978,11 @@ export default function App() {
             <ActivityFeed feed={feed} />
           </div>
         </aside>
+      </div>
+
+      {/* PPC Pilot — always mounted to preserve uploaded data across tab switches */}
+      <div style={{ display: page === 'ppc' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
+        <PPCApp />
       </div>
 
       {/* ── Brand detail slide-in ── */}
