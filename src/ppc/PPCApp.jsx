@@ -9,6 +9,7 @@ import ActionList from './components/ActionList.jsx';
 import TrackedActionList from './components/TrackedActionList.jsx';
 import WeeklyReport from './components/WeeklyReport.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
+import NegativeKeywordBuilder from './components/NegativeKeywordBuilder.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { key: 'campaigns',       label: 'Campaigns' },
   { key: 'products',        label: 'Products' },
   { key: 'searchTerms',     label: 'Search Terms' },
+  { key: 'negatives',       label: 'Neg Keywords' },
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
@@ -318,6 +320,17 @@ export default function PPCApp() {
           </>
         );
 
+      case 'negatives':
+        return (
+          <>
+            <div style={s.sectionTitle}>Negative Keyword Builder</div>
+            <div style={s.sectionSub}>
+              Auto-detected wasted search terms — review, adjust type, and export as CSV
+            </div>
+            <NegativeKeywordBuilder searchTerms={searchTerms} thresholds={thresholds} />
+          </>
+        );
+
       case 'recommendations':
         return (
           <>
@@ -404,10 +417,16 @@ export default function PPCApp() {
               if (item.key === 'recommendations') badge = recommendations.length;
               if (item.key === 'actions')         badge = activeTrackedCount;
               if (item.key === 'history')         badge = history.length || null;
+              if (item.key === 'negatives')       badge = searchTerms.filter(r =>
+                (r.orders ?? 0) === 0 && (r.sales ?? 0) === 0 &&
+                (r.spend  ?? 0) >= thresholds.maxNoOrderSpend &&
+                ((r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
+              ).length || null;
 
               const badgeColor =
-                item.key === 'actions'  ? '#f97316' :
-                item.key === 'history'  ? '#22c55e' :
+                item.key === 'actions'   ? '#f97316' :
+                item.key === 'history'   ? '#22c55e' :
+                item.key === 'negatives' ? '#ef4444' :
                 '#3b82f6';
 
               return (
