@@ -6,15 +6,19 @@ import ProductTable from './components/ProductTable.jsx';
 import SearchTermTable from './components/SearchTermTable.jsx';
 import RecommendationList from './components/RecommendationList.jsx';
 import ActionList from './components/ActionList.jsx';
+import TrackedActionList from './components/TrackedActionList.jsx';
 import WeeklyReport from './components/WeeklyReport.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
 
-const STORAGE_KEY_THRESHOLDS = 'ppc_thresholds';
-const STORAGE_KEY_TAB        = 'ppc_activeTab';
-const STORAGE_KEY_HISTORY    = 'ppc_history';
+const STORAGE_KEY_THRESHOLDS      = 'ppc_thresholds';
+const STORAGE_KEY_TAB             = 'ppc_activeTab';
+const STORAGE_KEY_HISTORY         = 'ppc_history';
+const STORAGE_KEY_TRACKED_ACTIONS = 'ppc_tracked_actions';
+
+const MAX_TRACKED_ACTIONS = 200; // prune oldest done/ignored when limit hit
 
 const NAV_ITEMS = [
   { key: 'overview',        label: 'Overview' },
@@ -22,7 +26,7 @@ const NAV_ITEMS = [
   { key: 'products',        label: 'Products' },
   { key: 'searchTerms',     label: 'Search Terms' },
   { key: 'recommendations', label: 'Recommendations' },
-  { key: 'actions',         label: 'Action List' },
+  { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
   { key: 'history',         label: 'History' },
   { key: 'settings',        label: 'Settings' },
@@ -43,9 +47,7 @@ const s = {
     transition: 'color 0.15s',
   },
   content: { flex: 1, overflowY: 'auto', padding: '24px 28px' },
-  sectionTitle: {
-    color: '#fff', fontWeight: 700, fontSize: 17, marginBottom: 4,
-  },
+  sectionTitle: { color: '#fff', fontWeight: 700, fontSize: 17, marginBottom: 4 },
   sectionSub: { color: '#555', fontSize: 12, marginBottom: 20 },
   banner: {
     background: '#0d1117', border: '1px solid #1e2a3a',
@@ -61,7 +63,7 @@ function lsGet(key) {
 }
 
 function lsSet(key, value) {
-  try { localStorage.setItem(key, value); } catch { /* quota exceeded or private mode */ }
+  try { localStorage.setItem(key, value); } catch { /* quota / private mode */ }
 }
 
 function loadThresholds() {
@@ -81,6 +83,7 @@ function genId() {
   }
 }
 
+// ── History helpers ────────────────────────────────────────────────────────────
 function loadHistory() {
   try {
     const raw = lsGet(STORAGE_KEY_HISTORY);
@@ -88,15 +91,32 @@ function loadHistory() {
   } catch { return []; }
 }
 
+// ── Tracked-action helpers ─────────────────────────────────────────────────────
+function loadTrackedActions() {
+  try {
+    const raw = lsGet(STORAGE_KEY_TRACKED_ACTIONS);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function persistTrackedActions(actions) {
+  lsSet(STORAGE_KEY_TRACKED_ACTIONS, JSON.stringify(actions));
+}
+
+function makeFingerprint(rec) {
+  return `${rec.type}::${rec.entity}::${rec.headline}`;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function PPCApp() {
-  const [uploads,    setUploads]    = useState([]);
-  const [activeTab,  setActiveTab]  = useState(() => lsGet(STORAGE_KEY_TAB) || 'overview');
-  const [thresholds, setThresholds] = useState(loadThresholds);
-  const [history,    setHistory]    = useState(loadHistory);
+  const [uploads,        setUploads]        = useState([]);
+  const [activeTab,      setActiveTab]      = useState(() => lsGet(STORAGE_KEY_TAB) || 'overview');
+  const [thresholds,     setThresholds]     = useState(loadThresholds);
+  const [history,        setHistory]        = useState(loadHistory);
+  const [trackedActions, setTrackedActions] = useState(loadTrackedActions);
 
-  useEffect(() => { lsSet(STORAGE_KEY_TAB, activeTab); }, [activeTab]);
-  useEffect(() => { saveThresholds(thresholds); }, [thresholds]);
+  useEffect(() => { lsSet(STORAGE_KEY_TAB, activeTab); },    [activeTab]);
+  useEffect(() => { saveThresholds(thresholds); },            [thresholds]);
 
   // ── Split uploads by report type ──
   const { campaigns, searchTerms, products, allRows } = useMemo(() => {
@@ -104,7 +124,7 @@ export default function PPCApp() {
     for (const u of uploads) {
       if (!u.rows) continue;
       allRows.push(...u.rows);
-      if (u.reportType === 'campaign')   campaigns.push(...u.rows);
+      if (u.reportType === 'campaign')        campaigns.push(...u.rows);
       else if (u.reportType === 'searchTerm') searchTerms.push(...u.rows);
       else if (u.reportType === 'product')    products.push(...u.rows);
     }
@@ -121,10 +141,65 @@ export default function PPCApp() {
     [campaigns, searchTerms, products, thresholds]
   );
 
+  // Pre-build fingerprint Set for O(1) duplicate checks in RecommendationList
+  const trackedFingerprints = useMemo(
+    () => new Set(trackedActions.map(makeFingerprint)),
+    [trackedActions]
+  );
+
   const hasData       = allRows.length > 0;
   const noReportTypes = uploads.some(u => u.reportType === 'unknown');
 
-  // ── Save a weekly snapshot ─────────────────────────────────────────────────
+  // ── Tracked-action CRUD ────────────────────────────────────────────────────
+  function trackAction(rec) {
+    const fp = makeFingerprint(rec);
+    if (trackedFingerprints.has(fp)) return; // duplicate — silently skip
+
+    const newAction = {
+      id:          genId(),
+      fingerprint: fp,
+      createdAt:   new Date().toISOString(),
+      status:      'open',
+      severity:    rec.severity,
+      type:        rec.type,
+      headline:    rec.headline,
+      explanation: rec.explanation,
+      action:      rec.action,
+      entity:      rec.entity,
+    };
+
+    setTrackedActions(prev => {
+      // Prune oldest done/ignored entries if we're at the cap
+      let next = [newAction, ...prev];
+      if (next.length > MAX_TRACKED_ACTIONS) {
+        const prunable = next.filter(a => a.status === 'done' || a.status === 'ignored');
+        if (prunable.length > 0) {
+          const pruneId = prunable[prunable.length - 1].id;
+          next = next.filter(a => a.id !== pruneId);
+        }
+      }
+      persistTrackedActions(next);
+      return next;
+    });
+  }
+
+  function updateActionStatus(id, newStatus) {
+    setTrackedActions(prev => {
+      const next = prev.map(a => a.id === id ? { ...a, status: newStatus } : a);
+      persistTrackedActions(next);
+      return next;
+    });
+  }
+
+  function deleteTrackedAction(id) {
+    setTrackedActions(prev => {
+      const next = prev.filter(a => a.id !== id);
+      persistTrackedActions(next);
+      return next;
+    });
+  }
+
+  // ── History CRUD ───────────────────────────────────────────────────────────
   function saveWeek(weekLabel) {
     if (!summary) return;
 
@@ -133,12 +208,10 @@ export default function PPCApp() {
         month: 'short', day: 'numeric', year: 'numeric',
       })}`;
 
-    // Top 10 campaigns by spend (raw rows)
     const topCampaigns = [...campaigns]
       .sort((a, b) => (b.spend || 0) - (a.spend || 0))
       .slice(0, 10);
 
-    // Top winners + wasted search terms
     const winners = searchTerms
       .filter(r =>
         r.orders > 0 &&
@@ -163,7 +236,7 @@ export default function PPCApp() {
     };
 
     setHistory(prev => {
-      const next = [entry, ...prev].slice(0, 12); // keep rolling 12 weeks max
+      const next = [entry, ...prev].slice(0, 12);
       lsSet(STORAGE_KEY_HISTORY, JSON.stringify(next));
       return next;
     });
@@ -177,9 +250,15 @@ export default function PPCApp() {
     });
   }
 
-  // ── Tab content ───────────────────────────────────────────────────────────
+  // ── Nav badge counts ───────────────────────────────────────────────────────
+  const activeTrackedCount = trackedActions.filter(
+    a => a.status === 'open' || a.status === 'in_progress'
+  ).length;
+
+  // ── Tab content ────────────────────────────────────────────────────────────
   function renderContent() {
     switch (activeTab) {
+
       case 'overview':
         return (
           <>
@@ -243,17 +322,30 @@ export default function PPCApp() {
         return (
           <>
             <div style={s.sectionTitle}>Smart Recommendations</div>
-            <div style={s.sectionSub}>{recommendations.length} rule-based recommendations generated from your data</div>
-            <RecommendationList recommendations={recommendations} />
+            <div style={s.sectionSub}>
+              {recommendations.length} rule-based recommendations — click{' '}
+              <span style={{ color: '#3b82f6' }}>Track →</span> to add any item to the Action Tracker
+            </div>
+            <RecommendationList
+              recommendations={recommendations}
+              trackedFingerprints={trackedFingerprints}
+              onTrackAction={trackAction}
+            />
           </>
         );
 
       case 'actions':
         return (
           <>
-            <div style={s.sectionTitle}>Daily PPC Action List</div>
-            <div style={s.sectionSub}>Check off tasks as you work through your PPC today</div>
-            <ActionList recommendations={recommendations} />
+            <div style={s.sectionTitle}>PPC Action Tracker</div>
+            <div style={s.sectionSub}>
+              {activeTrackedCount} active action{activeTrackedCount !== 1 ? 's' : ''} &middot; track recommendations from the Recommendations tab
+            </div>
+            <TrackedActionList
+              trackedActions={trackedActions}
+              onUpdateStatus={updateActionStatus}
+              onDelete={deleteTrackedAction}
+            />
           </>
         );
 
@@ -296,7 +388,7 @@ export default function PPCApp() {
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={s.root}>
       <div style={s.body}>
@@ -310,11 +402,11 @@ export default function PPCApp() {
 
               let badge = null;
               if (item.key === 'recommendations') badge = recommendations.length;
-              if (item.key === 'actions')         badge = recommendations.filter(r => r.severity === 'HIGH').length;
+              if (item.key === 'actions')         badge = activeTrackedCount;
               if (item.key === 'history')         badge = history.length || null;
 
               const badgeColor =
-                item.key === 'actions'  ? '#ef4444' :
+                item.key === 'actions'  ? '#f97316' :
                 item.key === 'history'  ? '#22c55e' :
                 '#3b82f6';
 
@@ -323,7 +415,7 @@ export default function PPCApp() {
                   key={item.key}
                   style={{
                     ...s.navBtn,
-                    color: active ? '#fff' : '#666',
+                    color:        active ? '#fff' : '#666',
                     borderBottom: active ? '2px solid #3b82f6' : '2px solid transparent',
                   }}
                   onClick={() => setActiveTab(item.key)}
