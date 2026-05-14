@@ -10,6 +10,7 @@ import TrackedActionList from './components/TrackedActionList.jsx';
 import WeeklyReport from './components/WeeklyReport.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
 import NegativeKeywordBuilder from './components/NegativeKeywordBuilder.jsx';
+import WinningKeywordBuilder from './components/WinningKeywordBuilder.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { key: 'products',        label: 'Products' },
   { key: 'searchTerms',     label: 'Search Terms' },
   { key: 'negatives',       label: 'Neg Keywords' },
+  { key: 'winners',         label: 'Win Keywords' },
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
@@ -331,6 +333,17 @@ export default function PPCApp() {
           </>
         );
 
+      case 'winners':
+        return (
+          <>
+            <div style={s.sectionTitle}>Winning Keyword Builder</div>
+            <div style={s.sectionSub}>
+              High-performing search terms — review, prioritize, and export a seed list for Exact Match campaigns
+            </div>
+            <WinningKeywordBuilder searchTerms={searchTerms} thresholds={thresholds} />
+          </>
+        );
+
       case 'recommendations':
         return (
           <>
@@ -422,11 +435,19 @@ export default function PPCApp() {
                 (r.spend  ?? 0) >= thresholds.maxNoOrderSpend &&
                 ((r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
               ).length || null;
+              if (item.key === 'winners')         badge = searchTerms.filter(r =>
+                (r.orders ?? 0) >= thresholds.minOrders &&
+                typeof r.acos === 'number' &&
+                r.acos <= thresholds.targetACoS &&
+                typeof r.roas === 'number' &&
+                r.roas >= thresholds.goodROASThreshold
+              ).length || null;
 
               const badgeColor =
                 item.key === 'actions'   ? '#f97316' :
                 item.key === 'history'   ? '#22c55e' :
                 item.key === 'negatives' ? '#ef4444' :
+                item.key === 'winners'   ? '#22c55e' :
                 '#3b82f6';
 
               return (
