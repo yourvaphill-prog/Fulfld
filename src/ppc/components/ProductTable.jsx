@@ -1,25 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas, groupBy } from '../utils/metricCalculator.js';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { T } from '../theme.js';
 
 const s = {
   container: { display: 'flex', flexDirection: 'column', gap: 12 },
   toolbar: { display: 'flex', gap: 10, alignItems: 'center' },
   searchInput: {
-    background: '#111', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#ccc', padding: '6px 12px', fontSize: 13, flex: 1, outline: 'none',
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '6px 12px', fontSize: 13, flex: 1, outline: 'none',
+    fontFamily: T.font.mono,
   },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
   th: {
-    background: '#0a0a0a', color: '#888', fontWeight: 600,
+    background: T.bg.panel, color: T.color.dim, fontWeight: 600,
     padding: '8px 12px', textAlign: 'left', fontSize: 11,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    borderBottom: '1px solid #1e1e1e', whiteSpace: 'nowrap', cursor: 'pointer',
-    userSelect: 'none',
+    borderBottom: `1px solid ${T.border.base}`, whiteSpace: 'nowrap', cursor: 'pointer',
+    userSelect: 'none', fontFamily: T.font.mono,
   },
-  td: { padding: '9px 12px', borderBottom: '1px solid #141414', color: '#ccc', whiteSpace: 'nowrap' },
-  empty: { textAlign: 'center', padding: '40px 0', color: '#444' },
+  td: { padding: '9px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.color.muted, whiteSpace: 'nowrap', fontFamily: T.font.mono },
+  empty: { textAlign: 'center', padding: '40px 0', color: T.color.dim, fontFamily: T.font.mono },
 };
 
 function productStatus(row, thresholds) {
@@ -111,7 +113,7 @@ export default function ProductTable({ products, thresholds }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        <span style={{ color: '#555', fontSize: 12 }}>{rows.length} products</span>
+        <span style={{ color: T.color.dim, fontSize: 12, fontFamily: T.font.mono }}>{rows.length} products</span>
       </div>
 
       <div style={s.tableWrap}>
@@ -134,8 +136,8 @@ export default function ProductTable({ products, thresholds }) {
               const rec = productRecommendation(row, thresholds);
               const id = row.asin ?? row.sku ?? '—';
               return (
-                <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : '#090909' }}>
-                  <td style={{ ...s.td, color: '#e2e8f0', fontFamily: 'monospace', fontSize: 12 }}>{id}</td>
+                <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                  <td style={{ ...s.td, color: T.color.white, fontFamily: T.font.mono, fontSize: 12 }}>{id}</td>
                   <td style={s.td}>{fmtCurrency(row.totalSpend)}</td>
                   <td style={s.td}>{fmtCurrency(row.totalSales)}</td>
                   <td style={s.td}>{fmtNum(row.totalOrders, 0)}</td>
@@ -143,8 +145,8 @@ export default function ProductTable({ products, thresholds }) {
                   <td style={s.td}>{fmtNum(row.totalImpressions, 0)}</td>
                   <td style={s.td}>
                     {row.avgAcos === 'NO_SALES'
-                      ? <span style={{ color: '#ef4444', fontSize: 11 }}>No Sales</span>
-                      : <span style={{ color: typeof row.avgAcos === 'number' && row.avgAcos <= thresholds.targetACoS ? '#22c55e' : '#ef4444' }}>
+                      ? <span style={{ color: T.color.red, fontSize: 11 }}>No Sales</span>
+                      : <span style={{ color: typeof row.avgAcos === 'number' && row.avgAcos <= thresholds.targetACoS ? T.color.green : T.color.red }}>
                           {fmtPct(row.avgAcos)}
                         </span>
                     }
@@ -158,7 +160,7 @@ export default function ProductTable({ products, thresholds }) {
                       borderRadius: 4, padding: '2px 7px', fontSize: 11, fontWeight: 600,
                     }}>{status.label}</span>
                   </td>
-                  <td style={{ ...s.td, color: '#888', fontSize: 12, maxWidth: 260, whiteSpace: 'normal' }}>{rec}</td>
+                  <td style={{ ...s.td, color: T.color.dim, fontSize: 12, maxWidth: 260, whiteSpace: 'normal' }}>{rec}</td>
                 </tr>
               );
             })}

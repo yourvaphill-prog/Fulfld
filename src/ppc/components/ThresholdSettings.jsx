@@ -1,4 +1,5 @@
 import React from 'react';
+import { T } from '../theme.js';
 
 const FIELDS = [
   {
@@ -72,22 +73,23 @@ const DEFAULT_THRESHOLDS = {
 
 const s = {
   container: { display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 560 },
-  card: { background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, padding: '16px 20px' },
-  row: { display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #141414' },
+  card: { ...T.glass.card, borderRadius: T.radius.md, padding: '16px 20px' },
+  row: { display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 16, marginBottom: 16, borderBottom: `1px solid ${T.border.subtle}` },
   labelRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontWeight: 600, fontSize: 13, color: '#e2e8f0' },
-  desc: { fontSize: 12, color: '#666', marginTop: 2 },
+  label: { fontWeight: 600, fontSize: 13, color: T.color.white, fontFamily: T.font.heading },
+  desc: { fontSize: 12, color: T.color.dim, marginTop: 2, fontFamily: T.font.mono },
   input: {
-    background: '#111', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#ccc', padding: '6px 10px', fontSize: 13, width: 120, outline: 'none',
-    textAlign: 'right',
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '6px 10px', fontSize: 13, width: 120, outline: 'none',
+    textAlign: 'right', fontFamily: T.font.mono, colorScheme: 'dark',
   },
-  display: { fontSize: 12, color: '#3b82f6', fontWeight: 600, minWidth: 60, textAlign: 'right' },
+  display: { fontSize: 12, color: T.color.cyan, fontWeight: 600, minWidth: 60, textAlign: 'right', fontFamily: T.font.mono },
   resetBtn: {
-    background: 'none', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#888', padding: '7px 16px', cursor: 'pointer', fontSize: 13,
+    background: 'none', border: `1px solid ${T.border.base}`, borderRadius: T.radius.sm,
+    color: T.color.dim, padding: '7px 16px', cursor: 'pointer', fontSize: 12,
+    fontFamily: T.font.mono, transition: T.transition.fast,
   },
-  heading: { color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 16 },
+  heading: { color: T.color.white, fontWeight: 700, fontSize: 14, marginBottom: 16, fontFamily: T.font.heading },
 };
 
 function toDisplay(val, type) {
@@ -121,8 +123,8 @@ export default function ThresholdSettings({ thresholds, onThresholdsChange }) {
     <div style={s.container}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>PPC Thresholds</div>
-          <div style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: T.color.white, fontWeight: 700, fontSize: 15, fontFamily: T.font.heading }}>PPC Thresholds</div>
+          <div style={{ color: T.color.dim, fontSize: 12, marginTop: 2, fontFamily: T.font.mono }}>
             These settings control how campaigns are scored and what triggers recommendations.
           </div>
         </div>

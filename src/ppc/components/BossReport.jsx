@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { generateBossReport } from '../utils/bossReportGenerator.js';
 import { Copy, Download, CheckCircle } from 'lucide-react';
+import { T } from '../theme.js';
 
 // ── Date-range label builder (same pattern as WeeklyReport) ───────────────────
 function buildDateLabel(start, end) {
@@ -24,30 +25,32 @@ const s = {
   container: { display: 'flex', flexDirection: 'column', gap: 16 },
   toolbar:   { display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' },
   dateRow:   { display: 'flex', gap: 6, alignItems: 'center' },
-  dateLabel: { color: '#555', fontSize: 11, whiteSpace: 'nowrap' },
+  dateLabel: { color: T.color.dim, fontSize: 11, whiteSpace: 'nowrap', fontFamily: T.font.mono },
   dateInput: {
-    background: '#111', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#ccc', padding: '6px 10px', fontSize: 12,
-    outline: 'none', colorScheme: 'dark',
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '6px 10px', fontSize: 12,
+    outline: 'none', colorScheme: 'dark', fontFamily: T.font.mono,
   },
-  dash: { color: '#444', padding: '0 2px' },
+  dash: { color: T.color.dim, padding: '0 2px' },
   copyBtn: {
     display: 'flex', alignItems: 'center', gap: 6,
-    background: '#1d4ed8', color: '#fff', border: 'none',
-    borderRadius: 6, padding: '7px 16px', cursor: 'pointer',
-    fontSize: 13, fontWeight: 600,
+    background: T.color.cyan, color: '#05080f', border: 'none',
+    borderRadius: T.radius.sm, padding: '7px 16px', cursor: 'pointer',
+    fontSize: 12, fontWeight: 700, fontFamily: T.font.heading, letterSpacing: '0.04em',
   },
   dlBtn: {
     display: 'flex', alignItems: 'center', gap: 6,
-    background: '#111', color: '#888', border: '1px solid #2a2a2a',
-    borderRadius: 6, padding: '7px 16px', cursor: 'pointer', fontSize: 13,
+    background: T.bg.card, color: T.color.muted, border: `1px solid ${T.border.base}`,
+    borderRadius: T.radius.sm, padding: '7px 16px', cursor: 'pointer',
+    fontSize: 12, fontFamily: T.font.mono,
   },
   report: {
-    background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: 8,
-    padding: '20px 24px', fontFamily: 'monospace', fontSize: 13,
-    color: '#ccc', lineHeight: 1.8, whiteSpace: 'pre-wrap', minHeight: 200,
+    ...T.glass.card,
+    borderRadius: T.radius.md,
+    padding: '20px 24px', fontFamily: T.font.mono, fontSize: 13,
+    color: T.color.muted, lineHeight: 1.8, whiteSpace: 'pre-wrap', minHeight: 200,
   },
-  empty: { textAlign: 'center', padding: '40px 0', color: '#444', fontSize: 13 },
+  empty: { textAlign: 'center', padding: '40px 0', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -123,7 +126,7 @@ export default function BossReport({
 
   return (
     <div style={s.container}>
-      <div style={{ color: '#888', fontSize: 13 }}>
+      <div style={{ color: T.color.muted, fontSize: 13, fontFamily: T.font.mono }}>
         Executive-level account summary — paste into email, Slack, or a client update doc.
       </div>
 
@@ -151,7 +154,7 @@ export default function BossReport({
 
         {/* Generated label preview */}
         {dateLabel && (
-          <span style={{ color: '#60a5fa', fontSize: 12, fontWeight: 600 }}>
+          <span style={{ color: T.color.cyan, fontSize: 12, fontWeight: 600, fontFamily: T.font.mono }}>
             {dateLabel}
           </span>
         )}

@@ -1,17 +1,19 @@
 import React from 'react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
+// ACoS and ROAS use dynamic health colors; all other cards use unified cyan
 const CARDS = [
-  { label: 'Total Spend', key: 'totalSpend', fmt: fmtCurrency, color: '#3b82f6' },
-  { label: 'Total Sales', key: 'totalSales', fmt: fmtCurrency, color: '#22c55e' },
-  { label: 'Total Orders', key: 'totalOrders', fmt: v => fmtNum(v, 0), color: '#00c896' },
-  { label: 'Avg ACoS', key: 'avgAcos', fmt: v => v === 'NO_SALES' ? 'No Sales' : fmtPct(v), color: '#eab308', acosField: true },
-  { label: 'Avg ROAS', key: 'avgRoas', fmt: fmtRoas, color: '#22c55e' },
-  { label: 'Total Clicks', key: 'totalClicks', fmt: v => fmtNum(v, 0), color: '#a78bfa' },
-  { label: 'Total Impressions', key: 'totalImpressions', fmt: v => fmtNum(v, 0), color: '#60a5fa' },
-  { label: 'Avg CTR', key: 'avgCtr', fmt: fmtPct, color: '#f59e0b' },
-  { label: 'Avg CPC', key: 'avgCpc', fmt: fmtCurrency, color: '#f97316' },
-  { label: 'Conv. Rate', key: 'avgCvr', fmt: fmtPct, color: '#34d399' },
+  { label: 'Total Spend',       key: 'totalSpend',       fmt: fmtCurrency },
+  { label: 'Total Sales',       key: 'totalSales',       fmt: fmtCurrency },
+  { label: 'Total Orders',      key: 'totalOrders',      fmt: v => fmtNum(v, 0) },
+  { label: 'Avg ACoS',         key: 'avgAcos',          fmt: v => v === 'NO_SALES' ? 'No Sales' : fmtPct(v), acosField: true },
+  { label: 'Avg ROAS',         key: 'avgRoas',          fmt: fmtRoas, roasField: true },
+  { label: 'Total Clicks',      key: 'totalClicks',      fmt: v => fmtNum(v, 0) },
+  { label: 'Total Impressions', key: 'totalImpressions', fmt: v => fmtNum(v, 0) },
+  { label: 'Avg CTR',          key: 'avgCtr',           fmt: fmtPct },
+  { label: 'Avg CPC',          key: 'avgCpc',           fmt: fmtCurrency },
+  { label: 'Conv. Rate',        key: 'avgCvr',           fmt: fmtPct },
 ];
 
 function acosColor(val, targetACoS) {
@@ -36,19 +38,19 @@ const s = {
     marginBottom: 24,
   },
   card: {
-    background: '#111',
-    borderRadius: 8,
+    ...T.glass.card,
+    borderRadius: T.radius.md,
     padding: '14px 16px',
-    border: '1px solid #1e1e1e',
   },
-  label: { color: '#666', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
-  value: { fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' },
+  label: { color: T.color.dim, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, fontFamily: T.font.mono },
+  value: { fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: T.font.heading },
   empty: {
     gridColumn: '1 / -1',
     textAlign: 'center',
     padding: '40px 0',
-    color: '#444',
+    color: T.color.dim,
     fontSize: 14,
+    fontFamily: T.font.mono,
   },
 };
 
@@ -64,9 +66,9 @@ export default function OverviewCards({ summary, thresholds }) {
   return (
     <div style={s.grid}>
       {CARDS.map(card => {
-        let color = card.color;
-        if (card.key === 'avgAcos') color = acosColor(summary.avgAcos, thresholds.targetACoS);
-        if (card.key === 'avgRoas') color = roasColor(summary.avgRoas, thresholds.goodROASThreshold);
+        let color = T.color.cyan;
+        if (card.acosField) color = acosColor(summary.avgAcos, thresholds.targetACoS);
+        if (card.roasField) color = roasColor(summary.avgRoas, thresholds.goodROASThreshold);
 
         return (
           <div key={card.key} style={{ ...s.card, borderTop: `2px solid ${color}` }}>

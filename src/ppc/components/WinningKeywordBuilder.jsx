@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, X, RotateCcw } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ppc_winners_excluded';
@@ -18,9 +19,9 @@ const TIER_CONFIG = {
   2: {
     label:  'Move to Exact Match',
     action: 'Test Exact Match',
-    color:  '#3b82f6',
-    bg:     '#3b82f611',
-    border: '#3b82f633',
+    color:  T.color.cyan,
+    bg:     'rgba(6,182,212,0.08)',
+    border: 'rgba(6,182,212,0.25)',
     reason: (r, t) =>
       `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — below target ACoS, isolate in Exact Match`,
   },
@@ -190,56 +191,61 @@ const s = {
     display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20,
   },
   summaryCard: {
-    background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8,
-    padding: '12px 18px', minWidth: 130,
+    ...T.glass.card,
+    borderRadius: T.radius.md, padding: '12px 18px', minWidth: 130,
   },
-  summaryLabel: { color: '#555', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  summaryValue: { color: '#fff', fontSize: 20, fontWeight: 700, marginTop: 2 },
+  summaryLabel: { color: T.color.dim, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono },
+  summaryValue: { color: T.color.white, fontSize: 20, fontWeight: 700, marginTop: 2, fontFamily: T.font.heading },
   filterRow: { display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
   filterBtn: {
-    padding: '5px 12px', borderRadius: 6, border: '1px solid #1e1e1e',
-    background: 'transparent', color: '#666', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    padding: '5px 12px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    fontFamily: T.font.mono,
   },
   searchBox: {
-    marginLeft: 'auto', background: '#0d0d0d', border: '1px solid #1e1e1e',
-    borderRadius: 6, color: '#ccc', padding: '5px 10px', fontSize: 12, outline: 'none', width: 200,
+    marginLeft: 'auto', background: T.bg.input, border: `1px solid ${T.border.input}`,
+    borderRadius: T.radius.sm, color: T.color.muted, padding: '5px 10px', fontSize: 12, outline: 'none', width: 200,
+    fontFamily: T.font.mono,
   },
   exportBtn: {
     display: 'flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 6, border: '1px solid #22c55e44',
-    background: '#22c55e11', color: '#22c55e', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+    padding: '6px 14px', borderRadius: T.radius.sm, border: `1px solid ${T.color.green}44`,
+    background: `${T.color.green}11`, color: T.color.green, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+    fontFamily: T.font.heading,
   },
   exportBtnDisabled: {
     display: 'flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 6, border: '1px solid #333',
-    background: 'transparent', color: '#444', cursor: 'not-allowed', fontSize: 12, fontWeight: 700,
+    padding: '6px 14px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'not-allowed', fontSize: 12, fontWeight: 700,
+    fontFamily: T.font.heading,
   },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
-    textAlign: 'left', color: '#555', fontSize: 11, fontWeight: 600,
+    textAlign: 'left', color: T.color.dim, fontSize: 11, fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    padding: '8px 10px', borderBottom: '1px solid #1a1a1a',
+    padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}`,
+    background: T.bg.panel, fontFamily: T.font.mono,
   },
   td: {
-    padding: '10px 10px', borderBottom: '1px solid #111',
-    color: '#ccc', fontSize: 12, verticalAlign: 'top',
+    padding: '10px 10px', borderBottom: `1px solid ${T.border.subtle}`,
+    color: T.color.muted, fontSize: 12, verticalAlign: 'top', fontFamily: T.font.mono,
   },
   tierBadge: {
-    display: 'inline-block', padding: '2px 8px', borderRadius: 4,
-    fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
+    display: 'inline-block', padding: '2px 8px', borderRadius: T.radius.sm,
+    fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap', fontFamily: T.font.mono,
   },
   actionBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
-    padding: '3px 6px', borderRadius: 4, display: 'flex', alignItems: 'center',
+    padding: '3px 6px', borderRadius: T.radius.sm, display: 'flex', alignItems: 'center',
   },
   emptyState: {
     textAlign: 'center', padding: '60px 20px',
-    color: '#555', fontSize: 13,
+    color: T.color.dim, fontSize: 13, fontFamily: T.font.mono,
   },
   note: {
     marginTop: 16, padding: '10px 14px',
-    background: '#22c55e08', border: '1px solid #22c55e22',
-    borderRadius: 6, color: '#666', fontSize: 11,
+    background: `${T.color.green}08`, border: `1px solid ${T.color.green}22`,
+    borderRadius: T.radius.sm, color: T.color.dim, fontSize: 11, fontFamily: T.font.mono,
   },
 };
 
@@ -381,7 +387,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
           if (['1','2','3','4'].includes(tab.key)) count = tierCounts[Number(tab.key)] ?? 0;
 
           const cfg = tab.key !== 'all' && tab.key !== 'excluded' ? TIER_CONFIG[Number(tab.key)] : null;
-          const activeColor = cfg ? cfg.color : tab.key === 'excluded' ? '#555' : '#3b82f6';
+          const activeColor = cfg ? cfg.color : tab.key === 'excluded' ? T.color.dim : T.color.cyan;
 
           return (
             <button
@@ -390,15 +396,15 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                 ...s.filterBtn,
                 color:       active_ ? activeColor : '#666',
                 borderColor: active_ ? activeColor + '55' : '#1e1e1e',
-                background:  active_ ? (cfg ? cfg.bg : tab.key === 'excluded' ? '#55555511' : '#3b82f611') : 'transparent',
+                background:  active_ ? (cfg ? cfg.bg : tab.key === 'excluded' ? `${T.color.dim}11` : 'rgba(6,182,212,0.08)') : 'transparent',
               }}
               onClick={() => setFilterTier(tab.key)}
             >
               {tab.label}
               {count > 0 && (
                 <span style={{
-                  marginLeft: 5, background: active_ ? activeColor : '#333',
-                  color: active_ ? '#fff' : '#999',
+                  marginLeft: 5, background: active_ ? activeColor : 'rgba(255,255,255,0.10)',
+                  color: active_ ? '#05080f' : T.color.dim,
                   borderRadius: 8, padding: '1px 6px', fontSize: 10, fontWeight: 700,
                 }}>
                   {count}
@@ -430,7 +436,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
       {/* ── Table ── */}
       {displayRows.length === 0 ? (
         <div style={{ ...s.emptyState, padding: '40px 20px' }}>
-          <div style={{ color: '#888' }}>No terms match this filter</div>
+          <div style={{ color: T.color.dim }}>No terms match this filter</div>
         </div>
       ) : (
         <table style={s.table}>
@@ -456,14 +462,14 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
               return (
                 <tr
                   key={row.fingerprint + i}
-                  style={{ opacity: isExcluded ? 0.45 : 1 }}
+                  style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', opacity: isExcluded ? 0.45 : 1 }}
                 >
                   {/* Search term + reason */}
                   <td style={s.td}>
-                    <div style={{ color: '#e2e8f0', fontWeight: 600, fontSize: 12, marginBottom: 3 }}>
+                    <div style={{ color: T.color.white, fontWeight: 600, fontSize: 12, marginBottom: 3 }}>
                       {row.searchTerm ?? row.targeting ?? '—'}
                     </div>
-                    <div style={{ color: '#555', fontSize: 11 }}>
+                    <div style={{ color: T.color.dim, fontSize: 11 }}>
                       {cfg.reason(row, thresholds)}
                     </div>
                     <span style={{
@@ -479,9 +485,9 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
 
                   {/* Campaign / ad group */}
                   <td style={s.td}>
-                    <div style={{ color: '#aaa', fontSize: 12 }}>{row.campaignName ?? '—'}</div>
+                    <div style={{ color: T.color.dim, fontSize: 12 }}>{row.campaignName ?? '—'}</div>
                     {row.adGroupName && (
-                      <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{row.adGroupName}</div>
+                      <div style={{ color: T.color.dim, fontSize: 11, marginTop: 2 }}>{row.adGroupName}</div>
                     )}
                   </td>
 
@@ -491,17 +497,17 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                   </td>
 
                   {/* Spend */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#aaa' }}>
+                  <td style={{ ...s.td, textAlign: 'right' }}>
                     {fmtCurrency(row.spend)}
                   </td>
 
                   {/* Sales */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>
+                  <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
                     {fmtCurrency(row.sales)}
                   </td>
 
                   {/* Orders */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#fff', fontWeight: 700 }}>
+                  <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
                     {fmtNum(row.orders)}
                   </td>
 
@@ -509,13 +515,13 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                   <td style={{
                     ...s.td, textAlign: 'right', fontWeight: 600,
                     color: typeof row.acos === 'number' && row.acos <= thresholds.targetACoS
-                      ? '#22c55e' : '#f97316',
+                      ? T.color.green : T.color.orange,
                   }}>
                     {row.acos === 'NO_SALES' ? '—' : fmtPct(row.acos)}
                   </td>
 
                   {/* ROAS */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#aaa' }}>
+                  <td style={{ ...s.td, textAlign: 'right' }}>
                     {fmtRoas(row.roas)}
                   </td>
 
@@ -537,7 +543,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                   <td style={{ ...s.td, textAlign: 'center' }}>
                     {isExcluded ? (
                       <button
-                        style={{ ...s.actionBtn, color: '#555' }}
+                        style={{ ...s.actionBtn, color: T.color.dim }}
                         title="Restore to active list"
                         onClick={() => handleRestore(row.fingerprint)}
                       >
@@ -545,11 +551,11 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                       </button>
                     ) : (
                       <button
-                        style={{ ...s.actionBtn, color: '#444' }}
+                        style={{ ...s.actionBtn, color: T.color.dim }}
                         title="Exclude from list"
                         onClick={() => handleExclude(row.fingerprint)}
-                        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                        onMouseLeave={e => e.currentTarget.style.color = '#444'}
+                        onMouseEnter={e => e.currentTarget.style.color = T.color.red}
+                        onMouseLeave={e => e.currentTarget.style.color = T.color.dim}
                       >
                         <X size={13} />
                       </button>

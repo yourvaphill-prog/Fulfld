@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download, X, RotateCcw } from 'lucide-react';
 import { fmtCurrency, fmtNum } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const NEG_TYPES = ['Negative Exact', 'Negative Phrase', 'Review First'];
@@ -129,66 +130,71 @@ const s = {
   // Summary bar
   summaryBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: '#0d0d14', border: '1px solid #1e1e2e',
-    borderRadius: 8, padding: '14px 20px', flexWrap: 'wrap', gap: 12,
+    ...T.glass.card,
+    borderRadius: T.radius.md, padding: '14px 20px', flexWrap: 'wrap', gap: 12,
   },
   summaryItems: { display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap' },
   summaryItem:  { display: 'flex', flexDirection: 'column', padding: '0 20px' },
-  summaryValue: { color: '#fff', fontWeight: 700, fontSize: 20, lineHeight: 1.2 },
-  summaryLabel: { color: '#555', fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  summaryDivider: { width: 1, height: 36, background: '#1e1e2e', flexShrink: 0 },
+  summaryValue: { color: T.color.white, fontWeight: 700, fontSize: 20, lineHeight: 1.2, fontFamily: T.font.heading },
+  summaryLabel: { color: T.color.dim, fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono },
+  summaryDivider: { width: 1, height: 36, background: T.border.base, flexShrink: 0 },
   exportBtn: {
     display: 'flex', alignItems: 'center', gap: 7,
-    background: '#1d4ed8', color: '#fff', border: 'none',
-    borderRadius: 7, padding: '9px 18px', cursor: 'pointer',
-    fontSize: 13, fontWeight: 700, flexShrink: 0,
+    background: T.color.cyan, color: '#05080f', border: 'none',
+    borderRadius: T.radius.sm, padding: '9px 18px', cursor: 'pointer',
+    fontSize: 12, fontWeight: 700, flexShrink: 0, fontFamily: T.font.heading,
+    letterSpacing: '0.04em',
   },
 
   // Bulk note
   note: {
-    background: '#0d1117', border: '1px solid #1e2a3a',
-    borderRadius: 6, padding: '10px 14px',
-    color: '#60a5fa', fontSize: 12, lineHeight: 1.6,
+    background: 'rgba(6,182,212,0.05)', border: `1px solid ${T.border.cyan}`,
+    borderRadius: T.radius.sm, padding: '10px 14px',
+    color: T.color.cyan, fontSize: 12, lineHeight: 1.6, fontFamily: T.font.mono,
   },
 
   // Filter bar
   filterBar: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' },
   filterBtn: {
-    padding: '5px 12px', borderRadius: 20, border: '1px solid #2a2a2a',
-    background: 'transparent', color: '#666', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600, transition: 'all 0.12s', whiteSpace: 'nowrap',
+    padding: '5px 12px', borderRadius: T.radius.pill, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer',
+    fontSize: 12, fontWeight: 600, transition: T.transition.fast, whiteSpace: 'nowrap',
+    fontFamily: T.font.mono,
   },
   searchInput: {
-    background: '#111', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#ccc', padding: '5px 12px', fontSize: 12,
-    outline: 'none', marginLeft: 'auto',
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '5px 12px', fontSize: 12,
+    outline: 'none', marginLeft: 'auto', fontFamily: T.font.mono,
   },
 
   // Table
   tableWrap: { overflowX: 'auto' },
   table:     { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
   th: {
-    background: '#0a0a0a', color: '#666', fontWeight: 600, padding: '9px 12px',
+    background: T.bg.panel, color: T.color.dim, fontWeight: 600, padding: '9px 12px',
     textAlign: 'left', fontSize: 11, textTransform: 'uppercase',
-    letterSpacing: '0.05em', borderBottom: '1px solid #1e1e1e', whiteSpace: 'nowrap',
+    letterSpacing: '0.05em', borderBottom: `1px solid ${T.border.base}`, whiteSpace: 'nowrap',
+    fontFamily: T.font.mono,
   },
   td: {
-    padding: '10px 12px', borderBottom: '1px solid #141414',
-    color: '#ccc', verticalAlign: 'top',
+    padding: '10px 12px', borderBottom: `1px solid ${T.border.subtle}`,
+    color: T.color.muted, verticalAlign: 'top', fontFamily: T.font.mono,
   },
 
   // Row actions
   removeBtn: {
     display: 'flex', alignItems: 'center', gap: 5,
-    background: 'transparent', border: '1px solid #2a2a2a',
-    borderRadius: 5, padding: '4px 9px', cursor: 'pointer',
-    fontSize: 11, color: '#555', transition: 'all 0.15s', whiteSpace: 'nowrap',
+    background: 'transparent', border: `1px solid ${T.border.subtle}`,
+    borderRadius: T.radius.sm, padding: '4px 9px', cursor: 'pointer',
+    fontSize: 11, color: T.color.dim, transition: T.transition.fast, whiteSpace: 'nowrap',
+    fontFamily: T.font.mono,
   },
   restoreBtn: {
     display: 'flex', alignItems: 'center', gap: 5,
-    background: 'transparent', border: '1px solid #2a2a2a',
-    borderRadius: 5, padding: '4px 9px', cursor: 'pointer',
-    fontSize: 11, color: '#555', transition: 'all 0.15s', whiteSpace: 'nowrap',
+    background: 'transparent', border: `1px solid ${T.border.subtle}`,
+    borderRadius: T.radius.sm, padding: '4px 9px', cursor: 'pointer',
+    fontSize: 11, color: T.color.dim, transition: T.transition.fast, whiteSpace: 'nowrap',
+    fontFamily: T.font.mono,
   },
 
   // Empty states
@@ -197,7 +203,7 @@ const s = {
     justifyContent: 'center', padding: '80px 24px', gap: 12, textAlign: 'center',
   },
   emptyFilter: {
-    textAlign: 'center', padding: '40px 0', color: '#444', fontSize: 13,
+    textAlign: 'center', padding: '40px 0', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono,
   },
 };
 
@@ -291,9 +297,9 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
     return (
       <div style={s.empty}>
         <div style={{ fontSize: 36 }}>🚫</div>
-        <div style={{ color: '#555', fontSize: 14, fontWeight: 600 }}>No search term data</div>
-        <div style={{ color: '#333', fontSize: 12, maxWidth: 380, lineHeight: 1.7 }}>
-          Upload a <span style={{ color: '#3b82f6' }}>Search Term Report</span> CSV to automatically
+        <div style={{ color: T.color.muted, fontSize: 14, fontWeight: 600, fontFamily: T.font.heading }}>No search term data</div>
+        <div style={{ color: T.color.dim, fontSize: 12, maxWidth: 380, lineHeight: 1.7, fontFamily: T.font.mono }}>
+          Upload a <span style={{ color: T.color.cyan }}>Search Term Report</span> CSV to automatically
           detect wasted spend and generate negative keyword suggestions.
         </div>
       </div>
@@ -304,11 +310,11 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
     return (
       <div style={s.empty}>
         <div style={{ fontSize: 36 }}>✅</div>
-        <div style={{ color: '#22c55e', fontSize: 14, fontWeight: 600 }}>No negative candidates found</div>
-        <div style={{ color: '#333', fontSize: 12, maxWidth: 380, lineHeight: 1.7 }}>
+        <div style={{ color: T.color.green, fontSize: 14, fontWeight: 600, fontFamily: T.font.heading }}>No negative candidates found</div>
+        <div style={{ color: T.color.dim, fontSize: 12, maxWidth: 380, lineHeight: 1.7, fontFamily: T.font.mono }}>
           All search terms with spend have generated at least one order.
           If this seems wrong, check your{' '}
-          <span style={{ color: '#3b82f6' }}>Threshold Settings</span> — particularly
+          <span style={{ color: T.color.cyan }}>Threshold Settings</span> — particularly
           "Max Spend (No Orders)".
         </div>
       </div>
@@ -420,25 +426,25 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
                 const isExcluded    = excluded.has(c.fingerprint);
 
                 return (
-                  <tr key={c.fingerprint} style={{ background: i % 2 === 0 ? 'transparent' : '#090909' }}>
+                  <tr key={c.fingerprint} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
 
                     {/* Search Term + reason below */}
                     <td style={{ ...s.td, minWidth: 200 }}>
-                      <div style={{ color: '#e2e8f0', fontWeight: 600, fontSize: 13, lineHeight: 1.4 }}>
+                      <div style={{ color: T.color.white, fontWeight: 600, fontSize: 13, lineHeight: 1.4 }}>
                         {c.searchTerm ?? c.targeting ?? '—'}
                       </div>
-                      <div style={{ color: '#555', fontSize: 11, marginTop: 4, lineHeight: 1.4, maxWidth: 300 }}>
+                      <div style={{ color: T.color.dim, fontSize: 11, marginTop: 4, lineHeight: 1.4, maxWidth: 300 }}>
                         {c.reason}
                       </div>
                     </td>
 
                     {/* Campaign */}
-                    <td style={{ ...s.td, color: '#aaa', fontSize: 12, maxWidth: 200 }}>
+                    <td style={{ ...s.td, color: T.color.dim, fontSize: 12, maxWidth: 200 }}>
                       <div style={{ whiteSpace: 'normal', lineHeight: 1.4 }}>
                         {c.campaignName ?? '—'}
                       </div>
                       {c.adGroupName && (
-                        <div style={{ color: '#444', fontSize: 11, marginTop: 2 }}>
+                        <div style={{ color: T.color.dim, fontSize: 11, marginTop: 2 }}>
                           {c.adGroupName}
                         </div>
                       )}
@@ -465,7 +471,7 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
                     {/* Negative Type — dropdown (active) or static text (excluded) */}
                     <td style={{ ...s.td, whiteSpace: 'nowrap' }}>
                       {isExcluded ? (
-                        <span style={{ color: '#555', fontSize: 12 }}>{effectiveType}</span>
+                        <span style={{ color: T.color.dim, fontSize: 12 }}>{effectiveType}</span>
                       ) : (
                         <select
                           value={effectiveType}
@@ -474,16 +480,17 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
                             background:   cfg.bg,
                             color:        cfg.color,
                             border:       `1px solid ${cfg.border}`,
-                            borderRadius: 5,
+                            borderRadius: T.radius.sm,
                             padding:      '4px 8px',
                             fontSize:     12,
                             fontWeight:   600,
                             cursor:       'pointer',
                             outline:      'none',
+                            fontFamily:   T.font.mono,
                           }}
                         >
                           {NEG_TYPES.map(t => (
-                            <option key={t} value={t} style={{ background: '#0d0d0d', color: '#ccc' }}>
+                            <option key={t} value={t} style={{ background: T.bg.panel, color: T.color.muted }}>
                               {t}
                             </option>
                           ))}
@@ -499,12 +506,12 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
                           onClick={() => restoreCandidate(c.fingerprint)}
                           title="Restore to active list"
                           onMouseEnter={e => {
-                            e.currentTarget.style.color       = '#22c55e';
-                            e.currentTarget.style.borderColor = '#22c55e55';
+                            e.currentTarget.style.color       = T.color.green;
+                            e.currentTarget.style.borderColor = `${T.color.green}55`;
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.color       = '#555';
-                            e.currentTarget.style.borderColor = '#2a2a2a';
+                            e.currentTarget.style.color       = T.color.dim;
+                            e.currentTarget.style.borderColor = T.border.subtle;
                           }}
                         >
                           <RotateCcw size={12} /> Restore
@@ -515,12 +522,12 @@ export default function NegativeKeywordBuilder({ searchTerms, thresholds }) {
                           onClick={() => removeCandidate(c.fingerprint)}
                           title="Remove from export list"
                           onMouseEnter={e => {
-                            e.currentTarget.style.color       = '#ef4444';
-                            e.currentTarget.style.borderColor = '#ef444455';
+                            e.currentTarget.style.color       = T.color.red;
+                            e.currentTarget.style.borderColor = `${T.color.red}55`;
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.color       = '#555';
-                            e.currentTarget.style.borderColor = '#2a2a2a';
+                            e.currentTarget.style.color       = T.color.dim;
+                            e.currentTarget.style.borderColor = T.border.subtle;
                           }}
                         >
                           <X size={12} /> Remove

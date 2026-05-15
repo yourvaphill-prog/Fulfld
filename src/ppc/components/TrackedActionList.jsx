@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { T } from '../theme.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  open:        { label: 'Open',        color: '#3b82f6', bg: '#3b82f611', dot: '#3b82f6' },
-  in_progress: { label: 'In Progress', color: '#f97316', bg: '#f9731611', dot: '#f97316' },
-  done:        { label: 'Done',        color: '#22c55e', bg: '#22c55e11', dot: '#22c55e' },
-  ignored:     { label: 'Ignored',     color: '#555',    bg: '#55555511', dot: '#555'    },
+  open:        { label: 'Open',        color: T.color.cyan,   bg: 'rgba(6,182,212,0.08)',  dot: T.color.cyan   },
+  in_progress: { label: 'In Progress', color: T.color.orange, bg: 'rgba(249,115,22,0.08)', dot: T.color.orange },
+  done:        { label: 'Done',        color: T.color.green,  bg: 'rgba(34,197,94,0.08)',  dot: T.color.green  },
+  ignored:     { label: 'Ignored',     color: T.color.dim,    bg: 'rgba(71,85,105,0.08)',  dot: T.color.dim    },
 };
 
 const STATUS_CYCLE = ['open', 'in_progress', 'done', 'ignored'];
@@ -45,21 +46,21 @@ const s = {
   container:   { display: 'flex', flexDirection: 'column', gap: 16 },
   filterRow:   { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' },
   filterGroup: { display: 'flex', gap: 4, flexWrap: 'wrap' },
-  filterLabel: { color: '#444', fontSize: 11, marginRight: 4, alignSelf: 'center' },
+  filterLabel: { color: T.color.dim, fontSize: 11, marginRight: 4, alignSelf: 'center', fontFamily: T.font.mono },
   filterBtn: {
-    padding: '4px 11px', borderRadius: 20, border: '1px solid #2a2a2a',
-    background: 'transparent', color: '#666', cursor: 'pointer',
-    fontSize: 11, fontWeight: 600, transition: 'all 0.12s',
+    padding: '4px 11px', borderRadius: T.radius.pill, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer',
+    fontSize: 11, fontWeight: 600, transition: T.transition.fast, fontFamily: T.font.mono,
   },
-  divider:     { width: 1, height: 20, background: '#1e1e1e', margin: '0 4px', alignSelf: 'center' },
-  summary:     { color: '#444', fontSize: 12 },
+  divider:     { width: 1, height: 20, background: T.border.base, margin: '0 4px', alignSelf: 'center' },
+  summary:     { color: T.color.dim, fontSize: 12, fontFamily: T.font.mono },
   empty: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     justifyContent: 'center', padding: '64px 24px', gap: 12, textAlign: 'center',
   },
   card: {
-    borderRadius: 8, border: '1px solid #1e1e1e',
-    background: '#0d0d14', padding: '14px 16px',
+    ...T.glass.card,
+    borderRadius: T.radius.md, padding: '14px 16px',
     display: 'flex', flexDirection: 'column', gap: 8,
     transition: 'opacity 0.2s',
   },
@@ -69,32 +70,32 @@ const s = {
   },
   badges:      { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', flex: 1 },
   badge: {
-    borderRadius: 4, padding: '2px 7px',
+    borderRadius: T.radius.sm, padding: '2px 7px',
     fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-    border: '1px solid transparent',
+    border: '1px solid transparent', fontFamily: T.font.mono,
   },
   cardActions: { display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 },
   statusBtn: {
     display: 'flex', alignItems: 'center', gap: 5,
-    padding: '5px 11px', borderRadius: 6, border: '1px solid',
+    padding: '5px 11px', borderRadius: T.radius.sm, border: '1px solid',
     cursor: 'pointer', fontSize: 12, fontWeight: 600,
-    background: 'transparent', transition: 'all 0.15s',
+    background: 'transparent', transition: T.transition.fast, fontFamily: T.font.heading,
   },
   dot: { width: 7, height: 7, borderRadius: '50%', flexShrink: 0 },
-  headline: { fontWeight: 700, fontSize: 14, lineHeight: 1.4 },
+  headline: { fontWeight: 700, fontSize: 14, lineHeight: 1.4, fontFamily: T.font.heading },
   action: {
-    fontSize: 12, color: '#60a5fa', lineHeight: 1.5,
-    paddingLeft: 2,
+    fontSize: 12, color: T.color.cyan, lineHeight: 1.5,
+    paddingLeft: 2, fontFamily: T.font.mono,
   },
   meta: {
     display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap',
     marginTop: 2,
   },
-  metaItem:    { color: '#444', fontSize: 11 },
+  metaItem:    { color: T.color.dim, fontSize: 11, fontFamily: T.font.mono },
   deleteBtn: {
     background: 'transparent', border: 'none',
-    color: '#333', cursor: 'pointer', padding: '4px 6px',
-    borderRadius: 4, transition: 'color 0.15s', flexShrink: 0,
+    color: T.color.dim, cursor: 'pointer', padding: '4px 6px',
+    borderRadius: T.radius.sm, transition: 'color 0.15s', flexShrink: 0,
   },
 };
 
@@ -119,10 +120,10 @@ export default function TrackedActionList({ trackedActions, onUpdateStatus, onDe
     return (
       <div style={s.empty}>
         <div style={{ fontSize: 36 }}>🎯</div>
-        <div style={{ color: '#555', fontSize: 14, fontWeight: 600 }}>No tracked actions yet</div>
-        <div style={{ color: '#333', fontSize: 12, maxWidth: 380, lineHeight: 1.7 }}>
-          Go to the <span style={{ color: '#3b82f6' }}>Recommendations</span> tab and click{' '}
-          <span style={{ color: '#3b82f6' }}>Track →</span> on any item to add it here.
+        <div style={{ color: T.color.muted, fontSize: 14, fontWeight: 600, fontFamily: T.font.heading }}>No tracked actions yet</div>
+        <div style={{ color: T.color.dim, fontSize: 12, maxWidth: 380, lineHeight: 1.7, fontFamily: T.font.mono }}>
+          Go to the <span style={{ color: T.color.cyan }}>Recommendations</span> tab and click{' '}
+          <span style={{ color: T.color.cyan }}>Track →</span> on any item to add it here.
         </div>
       </div>
     );
@@ -192,7 +193,7 @@ export default function TrackedActionList({ trackedActions, onUpdateStatus, onDe
 
       {/* ── No results for current filter ── */}
       {filtered.length === 0 && (
-        <div style={{ color: '#444', fontSize: 13, textAlign: 'center', padding: '32px 0' }}>
+        <div style={{ color: T.color.dim, fontSize: 13, textAlign: 'center', padding: '32px 0', fontFamily: T.font.mono }}>
           No actions match the current filters.
         </div>
       )}
@@ -252,8 +253,8 @@ export default function TrackedActionList({ trackedActions, onUpdateStatus, onDe
                   style={s.deleteBtn}
                   onClick={() => onDelete(action.id)}
                   title="Remove this tracked action"
-                  onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = '#333'; }}
+                  onMouseEnter={e => { e.currentTarget.style.color = T.color.red; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = T.color.dim; }}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -263,7 +264,7 @@ export default function TrackedActionList({ trackedActions, onUpdateStatus, onDe
             {/* Headline */}
             <div style={{
               ...s.headline,
-              color: isDim ? '#555' : '#e2e8f0',
+              color: isDim ? T.color.dim : T.color.white,
               textDecoration: action.status === 'done' ? 'line-through' : 'none',
             }}>
               {action.headline}
