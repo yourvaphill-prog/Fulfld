@@ -13,6 +13,7 @@ import NegativeKeywordBuilder from './components/NegativeKeywordBuilder.jsx';
 import WinningKeywordBuilder from './components/WinningKeywordBuilder.jsx';
 import ScalingPlan from './components/ScalingPlan.jsx';
 import ProductReadiness from './components/ProductReadiness.jsx';
+import BossReport from './components/BossReport.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
+  { key: 'bossReport',      label: 'Boss Report' },
   { key: 'history',         label: 'History' },
   { key: 'settings',        label: 'Settings' },
 ];
@@ -411,6 +413,24 @@ export default function PPCApp() {
               campaigns={campaigns}
               recommendations={recommendations}
               onSaveWeek={saveWeek}
+            />
+          </>
+        );
+
+      case 'bossReport':
+        return (
+          <>
+            <div style={s.sectionTitle}>PPC Boss Report</div>
+            <div style={s.sectionSub}>Executive-level account summary — narrative tone, account health score, wins and issues in one copy-paste block</div>
+            <BossReport
+              summary={summary}
+              campaigns={campaigns}
+              searchTerms={searchTerms}
+              products={products}
+              recommendations={recommendations}
+              trackedActions={trackedActions}
+              history={history}
+              thresholds={thresholds}
             />
           </>
         );
