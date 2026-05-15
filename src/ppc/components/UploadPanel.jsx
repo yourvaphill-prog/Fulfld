@@ -4,47 +4,49 @@ import { Upload, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { detectReportType } from '../utils/reportTypeDetector.js';
 import { normalizeRows } from '../utils/csvNormalizer.js';
 import { enrichRows } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
 const s = {
   panel: {
     width: 240,
     minWidth: 240,
-    background: '#0d0d0d',
-    borderRight: '1px solid #1e1e1e',
+    ...T.glass.panel,
     display: 'flex',
     flexDirection: 'column',
     padding: '20px 16px',
     gap: 16,
   },
-  heading: { color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase' },
+  heading: { color: T.color.white, fontWeight: 700, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: T.font.heading },
   dropZone: {
-    border: '2px dashed #2a2a2a',
-    borderRadius: 8,
+    border: `2px dashed ${T.border.base}`,
+    borderRadius: T.radius.md,
     padding: '20px 12px',
     textAlign: 'center',
     cursor: 'pointer',
-    transition: 'border-color 0.2s',
+    transition: T.transition.base,
   },
-  dropZoneActive: { borderColor: '#3b82f6' },
+  dropZoneActive: { borderColor: T.color.cyan },
   uploadBtn: {
-    background: '#1d4ed8',
-    color: '#fff',
+    background: T.color.cyan,
+    color: '#05080f',
     border: 'none',
-    borderRadius: 6,
+    borderRadius: T.radius.sm,
     padding: '8px 14px',
     cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 12,
+    fontWeight: 700,
+    fontFamily: T.font.heading,
     display: 'flex',
     alignItems: 'center',
     gap: 6,
     width: '100%',
     justifyContent: 'center',
     marginTop: 10,
+    letterSpacing: '0.04em',
   },
   fileItem: {
-    background: '#111',
-    borderRadius: 6,
+    ...T.glass.card,
+    borderRadius: T.radius.sm,
     padding: '8px 10px',
     display: 'flex',
     flexDirection: 'column',
@@ -52,35 +54,38 @@ const s = {
     fontSize: 12,
   },
   fileRow: { display: 'flex', alignItems: 'center', gap: 6 },
-  fileName: { flex: 1, color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  removeBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#555', padding: 2 },
+  fileName: { flex: 1, color: T.color.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  removeBtn: { background: 'none', border: 'none', cursor: 'pointer', color: T.color.dim, padding: 2 },
   typeSelect: {
-    background: '#1a1a1a',
-    border: '1px solid #2a2a2a',
-    borderRadius: 4,
-    color: '#ccc',
+    background: T.bg.input,
+    border: `1px solid ${T.border.input}`,
+    borderRadius: T.radius.sm,
+    color: T.color.muted,
     fontSize: 12,
     padding: '3px 6px',
     width: '100%',
+    outline: 'none',
+    colorScheme: 'dark',
   },
   badge: {
-    borderRadius: 4,
+    borderRadius: T.radius.sm,
     padding: '2px 6px',
     fontSize: 11,
     fontWeight: 600,
   },
   clearBtn: {
     background: 'none',
-    border: '1px solid #2a2a2a',
-    borderRadius: 6,
-    color: '#888',
+    border: `1px solid ${T.border.base}`,
+    borderRadius: T.radius.sm,
+    color: T.color.dim,
     padding: '6px 12px',
     cursor: 'pointer',
     fontSize: 12,
     width: '100%',
+    transition: T.transition.fast,
   },
-  errorText: { color: '#ef4444', fontSize: 11, marginTop: 2 },
-  hint: { color: '#555', fontSize: 11, lineHeight: 1.4 },
+  errorText: { color: T.color.red, fontSize: 11, marginTop: 2 },
+  hint: { color: T.color.dim, fontSize: 11, lineHeight: 1.5, fontFamily: T.font.mono },
 };
 
 export default function UploadPanel({ uploads, onUploadsChange }) {
@@ -159,8 +164,8 @@ export default function UploadPanel({ uploads, onUploadsChange }) {
         onDrop={onDrop}
         onClick={() => inputRef.current.click()}
       >
-        <Upload size={22} color="#555" />
-        <div style={{ color: '#555', fontSize: 12, marginTop: 8 }}>
+        <Upload size={22} color={T.color.dim} />
+        <div style={{ color: T.color.dim, fontSize: 12, marginTop: 8, fontFamily: T.font.mono }}>
           Drop Amazon Ads CSV files here
         </div>
         <button style={s.uploadBtn} onClick={e => { e.stopPropagation(); inputRef.current.click(); }}>
@@ -182,7 +187,7 @@ export default function UploadPanel({ uploads, onUploadsChange }) {
 
       {uploads.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ color: T.color.dim, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono }}>
             Uploaded Files
           </div>
           {uploads.map(u => (
@@ -201,7 +206,7 @@ export default function UploadPanel({ uploads, onUploadsChange }) {
                 ? <div style={s.errorText}>{u.error}</div>
                 : (
                   <>
-                    <div style={{ color: '#555', fontSize: 11 }}>{u.rowCount.toLocaleString()} rows</div>
+                    <div style={{ color: T.color.dim, fontSize: 11 }}>{u.rowCount.toLocaleString()} rows</div>
                     <select
                       style={s.typeSelect}
                       value={u.reportType}

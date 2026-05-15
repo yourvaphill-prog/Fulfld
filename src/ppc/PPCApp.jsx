@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { T } from './theme.js';
 import UploadPanel from './components/UploadPanel.jsx';
 import OverviewCards from './components/OverviewCards.jsx';
 import CampaignTable from './components/CampaignTable.jsx';
@@ -23,7 +24,7 @@ const STORAGE_KEY_TAB             = 'ppc_activeTab';
 const STORAGE_KEY_HISTORY         = 'ppc_history';
 const STORAGE_KEY_TRACKED_ACTIONS = 'ppc_tracked_actions';
 
-const MAX_TRACKED_ACTIONS = 200; // prune oldest done/ignored when limit hit
+const MAX_TRACKED_ACTIONS = 200;
 
 const NAV_ITEMS = [
   { key: 'overview',        label: 'Overview' },
@@ -41,31 +42,6 @@ const NAV_ITEMS = [
   { key: 'history',         label: 'History' },
   { key: 'settings',        label: 'Settings' },
 ];
-
-const s = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', background: '#050505' },
-  body: { display: 'flex', flex: 1, overflow: 'hidden' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  subNav: {
-    display: 'flex', gap: 2, padding: '12px 20px 0',
-    borderBottom: '1px solid #1a1a1a', flexShrink: 0, overflowX: 'auto',
-  },
-  navBtn: {
-    padding: '7px 14px', borderRadius: '6px 6px 0 0', border: 'none',
-    background: 'transparent', color: '#666', cursor: 'pointer',
-    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
-    transition: 'color 0.15s',
-  },
-  content: { flex: 1, overflowY: 'auto', padding: '24px 28px' },
-  sectionTitle: { color: '#fff', fontWeight: 700, fontSize: 17, marginBottom: 4 },
-  sectionSub: { color: '#555', fontSize: 12, marginBottom: 20 },
-  banner: {
-    background: '#0d1117', border: '1px solid #1e2a3a',
-    borderRadius: 8, padding: '14px 18px',
-    display: 'flex', alignItems: 'center', gap: 12,
-    marginBottom: 20, color: '#60a5fa', fontSize: 13,
-  },
-};
 
 // ── localStorage helpers ───────────────────────────────────────────────────────
 function lsGet(key) {
@@ -117,16 +93,130 @@ function makeFingerprint(rec) {
   return `${rec.type}::${rec.entity}::${rec.headline}`;
 }
 
+// ── Inline styles ──────────────────────────────────────────────────────────────
+const s = {
+  // Root: full-height flex column — App.jsx provides the shared background
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    fontFamily: T.font.body,
+  },
+
+  // ── Body row (sidebar + main) ──────────────────────────────────────────────
+  body: {
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+  },
+
+  // ── Main column (nav tabs + tab content) ──────────────────────────────────
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+
+  // Glass navigation tab bar
+  subNav: {
+    display: 'flex',
+    gap: 2,
+    padding: '0 16px',
+    ...T.glass.nav,
+    flexShrink: 0,
+    overflowX: 'auto',
+    // Hide scrollbar but keep scroll
+    scrollbarWidth: 'none',
+  },
+
+  // Individual nav tab button
+  navBtn: {
+    padding: '11px 13px',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    background: 'transparent',
+    color: T.color.dim,
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 600,
+    fontFamily: T.font.body,
+    whiteSpace: 'nowrap',
+    transition: T.transition.fast,
+    letterSpacing: '0.02em',
+    position: 'relative',
+  },
+
+  // Active nav tab button
+  navBtnActive: {
+    color: T.color.cyan,
+    borderBottom: `2px solid ${T.color.cyan}`,
+    textShadow: `0 0 12px rgba(6,182,212,0.4)`,
+  },
+
+  // Tab content area
+  tabContent: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '24px 28px',
+  },
+
+  // Section heading
+  sectionTitle: {
+    color: T.color.white,
+    fontWeight: 700,
+    fontSize: 17,
+    marginBottom: 4,
+    fontFamily: T.font.heading,
+    letterSpacing: '0.01em',
+  },
+
+  sectionSub: {
+    color: T.color.dim,
+    fontSize: 12,
+    marginBottom: 20,
+  },
+
+  // No-data banner
+  banner: {
+    background: 'rgba(6,182,212,0.06)',
+    border: '1px solid rgba(6,182,212,0.20)',
+    borderRadius: T.radius.sm,
+    padding: '12px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+    color: T.color.cyan,
+    fontSize: 13,
+  },
+};
+
+// ── Keyframe style tag injected once ──────────────────────────────────────────
+const KEYFRAMES = `
+  .ppc-subnav::-webkit-scrollbar { display: none; }
+`;
+
+function injectKeyframes() {
+  if (document.getElementById('ppc-keyframes')) return;
+  const style = document.createElement('style');
+  style.id = 'ppc-keyframes';
+  style.textContent = KEYFRAMES;
+  document.head.appendChild(style);
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
-export default function PPCApp() {
+export default function PPCApp({ onSwitchModule }) {
   const [uploads,        setUploads]        = useState([]);
   const [activeTab,      setActiveTab]      = useState(() => lsGet(STORAGE_KEY_TAB) || 'overview');
   const [thresholds,     setThresholds]     = useState(loadThresholds);
   const [history,        setHistory]        = useState(loadHistory);
   const [trackedActions, setTrackedActions] = useState(loadTrackedActions);
+  // Inject keyframes on mount
+  useEffect(() => { injectKeyframes(); }, []);
 
-  useEffect(() => { lsSet(STORAGE_KEY_TAB, activeTab); },    [activeTab]);
-  useEffect(() => { saveThresholds(thresholds); },            [thresholds]);
+  useEffect(() => { lsSet(STORAGE_KEY_TAB, activeTab); }, [activeTab]);
+  useEffect(() => { saveThresholds(thresholds); },        [thresholds]);
 
   // ── Split uploads by report type ──
   const { campaigns, searchTerms, products, allRows } = useMemo(() => {
@@ -151,7 +241,6 @@ export default function PPCApp() {
     [campaigns, searchTerms, products, thresholds]
   );
 
-  // Pre-build fingerprint Set for O(1) duplicate checks in RecommendationList
   const trackedFingerprints = useMemo(
     () => new Set(trackedActions.map(makeFingerprint)),
     [trackedActions]
@@ -163,7 +252,7 @@ export default function PPCApp() {
   // ── Tracked-action CRUD ────────────────────────────────────────────────────
   function trackAction(rec) {
     const fp = makeFingerprint(rec);
-    if (trackedFingerprints.has(fp)) return; // duplicate — silently skip
+    if (trackedFingerprints.has(fp)) return;
 
     const newAction = {
       id:          genId(),
@@ -179,7 +268,6 @@ export default function PPCApp() {
     };
 
     setTrackedActions(prev => {
-      // Prune oldest done/ignored entries if we're at the cap
       let next = [newAction, ...prev];
       if (next.length > MAX_TRACKED_ACTIONS) {
         const prunable = next.filter(a => a.status === 'done' || a.status === 'ignored');
@@ -284,16 +372,19 @@ export default function PPCApp() {
             <OverviewCards summary={summary} thresholds={thresholds} />
             {hasData && recommendations.filter(r => r.severity === 'HIGH').length > 0 && (
               <>
-                <div style={{ ...s.sectionTitle, fontSize: 14, marginBottom: 8 }}>
+                <div style={{ ...s.sectionTitle, fontSize: 14, marginBottom: 8, marginTop: 24 }}>
                   🔴 {recommendations.filter(r => r.severity === 'HIGH').length} High-Priority Issues
                 </div>
                 {recommendations.filter(r => r.severity === 'HIGH').slice(0, 3).map((rec, i) => (
                   <div key={i} style={{
-                    background: '#ef444411', border: '1px solid #ef444433', borderRadius: 6,
-                    padding: '10px 14px', marginBottom: 8,
+                    background: 'rgba(239,68,68,0.07)',
+                    border: '1px solid rgba(239,68,68,0.20)',
+                    borderRadius: T.radius.sm,
+                    padding: '10px 14px',
+                    marginBottom: 8,
                   }}>
-                    <div style={{ color: '#ef4444', fontWeight: 700, fontSize: 13 }}>{rec.headline}</div>
-                    <div style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>→ {rec.action}</div>
+                    <div style={{ color: T.color.red, fontWeight: 700, fontSize: 13 }}>{rec.headline}</div>
+                    <div style={{ color: T.color.muted, fontSize: 12, marginTop: 4 }}>→ {rec.action}</div>
                   </div>
                 ))}
               </>
@@ -378,7 +469,7 @@ export default function PPCApp() {
             <div style={s.sectionTitle}>Smart Recommendations</div>
             <div style={s.sectionSub}>
               {recommendations.length} rule-based recommendations — click{' '}
-              <span style={{ color: '#3b82f6' }}>Track →</span> to add any item to the Action Tracker
+              <span style={{ color: T.color.cyan }}>Track →</span> to add any item to the Action Tracker
             </div>
             <RecommendationList
               recommendations={recommendations}
@@ -460,111 +551,121 @@ export default function PPCApp() {
     }
   }
 
+  // ── Badge helpers ──────────────────────────────────────────────────────────
+  function getBadge(itemKey) {
+    if (itemKey === 'recommendations') return recommendations.length || null;
+    if (itemKey === 'actions')         return activeTrackedCount || null;
+    if (itemKey === 'history')         return history.length || null;
+
+    if (itemKey === 'negatives') return searchTerms.filter(r =>
+      (r.orders ?? 0) === 0 && (r.sales ?? 0) === 0 &&
+      (r.spend  ?? 0) >= thresholds.maxNoOrderSpend &&
+      ((r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
+    ).length || null;
+
+    if (itemKey === 'winners') return searchTerms.filter(r =>
+      (r.orders ?? 0) >= thresholds.minOrders &&
+      typeof r.acos === 'number' && r.acos <= thresholds.targetACoS &&
+      typeof r.roas === 'number' && r.roas >= thresholds.goodROASThreshold
+    ).length || null;
+
+    if (itemKey === 'scaling') {
+      const seen = new Set(); let n = 0;
+      for (const c of campaigns) {
+        const name = c.campaignName ?? '';
+        if (seen.has(name)) continue; seen.add(name);
+        if (
+          (c.orders ?? 0) >= thresholds.minOrders &&
+          typeof c.acos === 'number' && c.acos <= thresholds.targetACoS &&
+          typeof c.roas === 'number' && c.roas >= thresholds.goodROASThreshold
+        ) n++;
+      }
+      return n || null;
+    }
+
+    if (itemKey === 'readiness') {
+      const seen = new Set(); let n = 0;
+      for (const p of products) {
+        const id = p.asin ?? p.sku ?? '';
+        if (seen.has(id)) continue; seen.add(id);
+        if (
+          (p.orders ?? 0) >= thresholds.minOrders &&
+          typeof p.acos === 'number' && p.acos <= thresholds.targetACoS &&
+          typeof p.roas === 'number' && p.roas >= thresholds.goodROASThreshold
+        ) n++;
+      }
+      return n || null;
+    }
+
+    return null;
+  }
+
+  function getBadgeColor(itemKey) {
+    if (itemKey === 'actions')   return T.color.orange;
+    if (itemKey === 'negatives') return T.color.red;
+    return T.color.green;
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={s.root}>
+
+      {/* ── Body: UploadPanel + main content ── */}
       <div style={s.body}>
-        <UploadPanel uploads={uploads} onUploadsChange={setUploads} />
+          <UploadPanel uploads={uploads} onUploadsChange={setUploads} />
 
-        <div style={s.main}>
-          {/* Sub-navigation */}
-          <div style={s.subNav}>
-            {NAV_ITEMS.map(item => {
-              const active = activeTab === item.key;
+          <div style={s.main}>
+            {/* Glass tab navigation */}
+            <nav style={s.subNav} className="ppc-subnav">
+              {NAV_ITEMS.map(item => {
+                const active = activeTab === item.key;
+                const badge  = getBadge(item.key);
 
-              let badge = null;
-              if (item.key === 'recommendations') badge = recommendations.length;
-              if (item.key === 'actions')         badge = activeTrackedCount;
-              if (item.key === 'history')         badge = history.length || null;
-              if (item.key === 'negatives')       badge = searchTerms.filter(r =>
-                (r.orders ?? 0) === 0 && (r.sales ?? 0) === 0 &&
-                (r.spend  ?? 0) >= thresholds.maxNoOrderSpend &&
-                ((r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
-              ).length || null;
-              if (item.key === 'winners')         badge = searchTerms.filter(r =>
-                (r.orders ?? 0) >= thresholds.minOrders &&
-                typeof r.acos === 'number' &&
-                r.acos <= thresholds.targetACoS &&
-                typeof r.roas === 'number' &&
-                r.roas >= thresholds.goodROASThreshold
-              ).length || null;
-              if (item.key === 'scaling') {
-                // Badge = number of campaigns that are Scale Opportunity candidates
-                const seen = new Set();
-                let scaleCount = 0;
-                for (const c of campaigns) {
-                  const name = c.campaignName ?? '';
-                  if (seen.has(name)) continue;
-                  seen.add(name);
-                  const acos  = typeof c.acos  === 'number' ? c.acos  : null;
-                  const roas  = typeof c.roas  === 'number' ? c.roas  : null;
-                  if (
-                    (c.orders ?? 0) >= thresholds.minOrders &&
-                    acos !== null && acos <= thresholds.targetACoS &&
-                    roas !== null && roas >= thresholds.goodROASThreshold
-                  ) scaleCount++;
-                }
-                badge = scaleCount || null;
-              }
-              if (item.key === 'readiness') {
-                // Badge = number of products meeting Ready to Scale criteria
-                const seen = new Set();
-                let readyCount = 0;
-                for (const p of products) {
-                  const id = p.asin ?? p.sku ?? '';
-                  if (seen.has(id)) continue;
-                  seen.add(id);
-                  const acos = typeof p.acos === 'number' ? p.acos : null;
-                  const roas = typeof p.roas === 'number' ? p.roas : null;
-                  if (
-                    (p.orders ?? 0) >= thresholds.minOrders &&
-                    acos !== null && acos <= thresholds.targetACoS &&
-                    roas !== null && roas >= thresholds.goodROASThreshold
-                  ) readyCount++;
-                }
-                badge = readyCount || null;
-              }
+                return (
+                  <button
+                    key={item.key}
+                    style={{
+                      ...s.navBtn,
+                      ...(active ? s.navBtnActive : {}),
+                    }}
+                    onClick={() => setActiveTab(item.key)}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        e.currentTarget.style.color = T.color.muted;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        e.currentTarget.style.color = T.color.dim;
+                      }
+                    }}
+                  >
+                    {item.label}
+                    {badge > 0 && (
+                      <span style={{
+                        marginLeft: 5,
+                        background: getBadgeColor(item.key),
+                        color: '#fff',
+                        borderRadius: T.radius.pill,
+                        padding: '1px 6px',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        verticalAlign: 'middle',
+                      }}>
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
 
-              const badgeColor =
-                item.key === 'actions'    ? '#f97316' :
-                item.key === 'history'    ? '#22c55e' :
-                item.key === 'negatives'  ? '#ef4444' :
-                item.key === 'winners'    ? '#22c55e' :
-                item.key === 'scaling'    ? '#22c55e' :
-                item.key === 'readiness'  ? '#22c55e' :
-                '#3b82f6';
-
-              return (
-                <button
-                  key={item.key}
-                  style={{
-                    ...s.navBtn,
-                    color:        active ? '#fff' : '#666',
-                    borderBottom: active ? '2px solid #3b82f6' : '2px solid transparent',
-                  }}
-                  onClick={() => setActiveTab(item.key)}
-                >
-                  {item.label}
-                  {badge > 0 && (
-                    <span style={{
-                      marginLeft: 5, background: badgeColor,
-                      color: '#fff', borderRadius: 10,
-                      padding: '1px 6px', fontSize: 10, fontWeight: 700,
-                    }}>
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tab content */}
-          <div style={s.content}>
-            {renderContent()}
+            {/* Tab content */}
+            <div style={s.tabContent}>
+              {renderContent()}
+            </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

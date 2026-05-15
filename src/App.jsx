@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Component } from 'react';
 import PPCApp from './ppc/PPCApp.jsx';
+import CommandCenterLanding from './CommandCenterLanding.jsx';
+import ppcBg    from './assets/ppc-bg.jpg';
+import fufldLogo from './assets/fufld-logo.png';
 import Papa from 'papaparse';
 import { Upload, Settings, Download, Users, X, ChevronDown, LogOut, Zap } from 'lucide-react';
 
@@ -557,9 +560,10 @@ export default function App() {
   });
 
   // ── Page ──
-  const [page, setPage]             = useState('dashboard');
+  const [page, setPage]             = useState('home');
   const [selectedBrand, setSelected] = useState(null);
-  const [showUpload, setShowUpload]  = useState(false);
+  const [showUpload, setShowUpload]          = useState(false);
+  const [showModuleSwitcher, setShowModuleSwitcher] = useState(false);
 
   // ── Shared state hooks ──
   const { statuses, updateStatus } = useSharedStatuses(userName);
@@ -711,7 +715,20 @@ export default function App() {
   const onlineOthers = (Array.isArray(onlineUsers) ? onlineUsers : []).filter(u => u !== userName);
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: BG, fontFamily: "'DM Mono', monospace" }}>
+    <div style={{
+      height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      fontFamily: "'DM Mono', monospace",
+      // Layered background: CSS grid lines → dark overlay → cyber grid image
+      backgroundImage: [
+        'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.020) 40px)',
+        'repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.020) 40px)',
+        'linear-gradient(rgba(5,8,15,0.87), rgba(5,8,15,0.87))',
+        `url(${ppcBg})`,
+      ].join(', '),
+      backgroundSize: 'auto, auto, auto, cover',
+      backgroundPosition: 'top left, top left, center, center',
+      backgroundRepeat: 'repeat, repeat, no-repeat, no-repeat',
+    }}>
 
       {/* ── Header ── */}
       <header style={{
@@ -721,29 +738,24 @@ export default function App() {
         display: 'flex', alignItems: 'center', padding: '0 24px', height: 54,
         gap: 24,
       }}>
-        {/* Logo */}
+        {/* Logo — FUFLD image + module-aware title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 7,
-            background: `linear-gradient(135deg, ${G}30, ${B}30)`,
-            border: `1px solid ${G}40`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <img src={fufldLogo} alt="FULFLD" style={{ height: 28, width: 'auto', display: 'block' }} />
+          <span style={{
+            color: page === 'ppc' ? '#06b6d4' : page === 'home' ? '#a78bfa' : G,
+            fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', fontFamily: "'Syne', sans-serif",
           }}>
-            <Zap size={14} color={G} />
-          </div>
-          <span style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em' }}>
-            FULFLD <span style={{ color: G }}>SCOUT</span>
+            {page === 'ppc' ? 'PPC' : page === 'home' ? 'CC' : 'SCOUT'}
           </span>
         </div>
 
-        {/* Nav */}
-        <nav style={{ display: 'flex', gap: 2, flex: 1 }}>
-          {[
+        {/* Nav — Brand Scout tabs when in BS; labels when in PPC/Home */}
+        <nav style={{ display: 'flex', gap: 2, flex: 1, alignItems: 'center' }}>
+          {page !== 'ppc' && page !== 'home' && [
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'kpi',       label: 'KPI Settings' },
             { id: 'export',    label: 'Export' },
             { id: 'dupes',     label: 'Duplicates' },
-            { id: 'ppc',       label: 'PPC Pilot' },
           ].map(({ id, label }) => (
             <button key={id} onClick={() => setPage(id)} style={{
               background: page === id ? 'rgba(0,255,135,0.08)' : 'transparent',
@@ -757,6 +769,14 @@ export default function App() {
               {label}
             </button>
           ))}
+          {(page === 'ppc' || page === 'home') && (
+            <span style={{
+              color: '#1e293b', fontSize: 10, letterSpacing: '0.10em',
+              textTransform: 'uppercase', paddingLeft: 4,
+            }}>
+              {page === 'home' ? 'Module Selection' : 'Command Center'}
+            </span>
+          )}
         </nav>
 
         {/* Right side */}
@@ -787,6 +807,70 @@ export default function App() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: B, animation: 'spin 1s linear infinite', display: 'inline-block' }} />
               syncing…
             </span>
+          )}
+
+          {/* Module Switcher — only visible when inside a module, not on landing */}
+          {page !== 'home' && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowModuleSwitcher(s => !s)}
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${page === 'ppc' ? 'rgba(6,182,212,0.28)' : BORDER}`,
+                  borderRadius: 7, padding: '5px 12px',
+                  color: page === 'ppc' ? '#06b6d4' : '#94a3b8',
+                  fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                {page === 'ppc' ? '⚡ PPC Pilot' : '🔍 Brand Scout'}
+                <ChevronDown size={10} />
+              </button>
+              {showModuleSwitcher && (
+                <div style={{
+                  position: 'absolute', top: '110%', right: 0,
+                  background: 'rgba(8,12,22,0.97)',
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: 8, overflow: 'hidden', minWidth: 180,
+                  backdropFilter: 'blur(16px)', zIndex: 300,
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.65)',
+                }}>
+                  <div style={{
+                    padding: '7px 14px 5px', fontSize: 9, letterSpacing: '0.12em',
+                    textTransform: 'uppercase', color: '#334155',
+                    borderBottom: `1px solid ${BORDER}`,
+                  }}>
+                    Switch Module
+                  </div>
+                  {[
+                    { id: 'home',      label: '⬡ Command Center', accent: '#a78bfa' },
+                    { id: 'dashboard', label: '🔍 Brand Scout',    accent: G        },
+                    { id: 'ppc',       label: '⚡ PPC Pilot',      accent: '#06b6d4' },
+                  ].map(({ id, label, accent }) => {
+                    const active =
+                      id === 'ppc'  ? page === 'ppc' :
+                      id === 'home' ? false :          // never "active" — it's a home link
+                      page !== 'ppc' && page !== 'home';
+                    return (
+                      <button key={id}
+                        onClick={() => { setPage(id); setShowModuleSwitcher(false); }}
+                        style={{
+                          width: '100%', border: 'none', textAlign: 'left',
+                          background: active ? 'rgba(255,255,255,0.05)' : 'transparent',
+                          borderLeft: `3px solid ${active ? accent : 'transparent'}`,
+                          padding: '9px 14px',
+                          color: active ? accent : id === 'home' ? '#475569' : '#475569',
+                          fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
+                          fontWeight: active ? 700 : 400,
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Upload button */}
@@ -886,9 +970,16 @@ export default function App() {
         </div>
       )}
 
+      {/* ── Command Center landing — module selection screen ── */}
+      {page === 'home' && (
+        <CommandCenterLanding
+          onSelectModule={(id) => setPage(id)}
+        />
+      )}
+
       {/* ── Main content ── */}
-      {/* Brand Scout layout — hidden but mounted while on PPC tab to preserve state */}
-      <div style={{ display: page === 'ppc' ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
+      {/* Brand Scout — always mounted, hidden when on PPC or home (preserves state) */}
+      <div style={{ display: (page === 'ppc' || page === 'home') ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Content area ── */}
         <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
@@ -982,7 +1073,7 @@ export default function App() {
 
       {/* PPC Pilot — always mounted to preserve uploaded data across tab switches */}
       <div style={{ display: page === 'ppc' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
-        <PPCApp />
+        <PPCApp onSwitchModule={setPage} />
       </div>
 
       {/* ── Brand detail slide-in ── */}
@@ -1008,6 +1099,10 @@ export default function App() {
           onClick={() => setShowUserMenu(false)}
         />
       )}
+
+      {/* Note: no separate click-away for module switcher — the header's stacking
+          context (z-index:100) would place any fixed backdrop above it, blocking
+          dropdown button clicks. Each option closes the dropdown on click. */}
 
       {/* ── Global styles ── */}
       <style>{`

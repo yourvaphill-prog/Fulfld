@@ -3,6 +3,7 @@ import { Download, Copy, CheckCircle } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
 import { healthLabel } from '../utils/healthScore.js';
 import { buildScalingPlan, summarisePlan, TIER_META } from '../utils/scalingEngine.js';
+import { T } from '../theme.js';
 
 // ── Filter tab definitions ─────────────────────────────────────────────────────
 const FILTER_TABS = [
@@ -16,11 +17,11 @@ const FILTER_TABS = [
 
 const TAB_COLOR = {
   scale:      '#22c55e',
-  optimize:   '#3b82f6',
+  optimize:   T.color.cyan,
   at_risk:    '#f97316',
   needs_data: '#eab308',
   pause:      '#ef4444',
-  all:        '#3b82f6',
+  all:        T.color.cyan,
 };
 
 // ── CSV export ─────────────────────────────────────────────────────────────────
@@ -110,47 +111,50 @@ function buildSummaryText(plan, stats) {
 const s = {
   summaryBar: { display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 },
   summaryCard: {
-    background: '#0d0d0d', border: '1px solid #1e1e1e',
-    borderRadius: 8, padding: '12px 18px', minWidth: 130,
+    ...T.glass.card,
+    borderRadius: T.radius.md, padding: '12px 18px', minWidth: 130,
   },
   summaryLabel: {
-    color: '#555', fontSize: 11, fontWeight: 600,
-    textTransform: 'uppercase', letterSpacing: '0.05em',
+    color: T.color.dim, fontSize: 11, fontWeight: 600,
+    textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono,
   },
-  summaryValue: { color: '#fff', fontSize: 20, fontWeight: 700, marginTop: 2 },
+  summaryValue: { color: T.color.white, fontSize: 20, fontWeight: 700, marginTop: 2, fontFamily: T.font.heading },
   filterRow: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 },
   filterBtn: {
-    padding: '5px 12px', borderRadius: 6, border: '1px solid #1e1e1e',
-    background: 'transparent', color: '#666', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    padding: '5px 12px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    fontFamily: T.font.mono,
   },
   searchBox: {
-    marginLeft: 'auto', background: '#0d0d0d', border: '1px solid #1e1e1e',
-    borderRadius: 6, color: '#ccc', padding: '5px 10px', fontSize: 12,
-    outline: 'none', width: 220,
+    marginLeft: 'auto', background: T.bg.input, border: `1px solid ${T.border.input}`,
+    borderRadius: T.radius.sm, color: T.color.muted, padding: '5px 10px', fontSize: 12,
+    outline: 'none', width: 220, fontFamily: T.font.mono,
   },
   actionBtn: (active) => ({
     display: 'flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-    border:      active ? '1px solid #22c55e44' : '1px solid #1e1e1e',
-    background:  active ? '#22c55e11'           : 'transparent',
-    color:       active ? '#22c55e'             : '#666',
+    padding: '6px 14px', borderRadius: T.radius.sm, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+    border:      active ? `1px solid ${T.color.green}44` : `1px solid ${T.border.subtle}`,
+    background:  active ? `${T.color.green}11`           : 'transparent',
+    color:       active ? T.color.green                  : T.color.dim,
+    fontFamily:  T.font.heading,
   }),
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
-    textAlign: 'left', color: '#555', fontSize: 11, fontWeight: 600,
+    textAlign: 'left', color: T.color.dim, fontSize: 11, fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    padding: '8px 10px', borderBottom: '1px solid #1a1a1a', whiteSpace: 'nowrap',
+    padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap',
+    background: T.bg.panel, fontFamily: T.font.mono,
   },
   td: {
-    padding: '11px 10px', borderBottom: '1px solid #111',
-    color: '#ccc', fontSize: 12, verticalAlign: 'top',
+    padding: '11px 10px', borderBottom: `1px solid ${T.border.subtle}`,
+    color: T.color.muted, fontSize: 12, verticalAlign: 'top', fontFamily: T.font.mono,
   },
   badge: (color, bg, border) => ({
-    display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+    display: 'inline-block', padding: '2px 8px', borderRadius: T.radius.sm,
     fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
     color, background: bg, border: `1px solid ${border}`,
   }),
-  emptyState: { textAlign: 'center', padding: '60px 20px', color: '#555', fontSize: 13 },
+  emptyState: { textAlign: 'center', padding: '60px 20px', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
 };
 
 // ── Mini health bar (same style as CampaignTable) ──────────────────────────────
@@ -160,10 +164,10 @@ function HealthBadge({ score }) {
     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{
         display: 'inline-block', width: 28, height: 5, borderRadius: 3,
-        background: `linear-gradient(to right, ${color} ${score}%, #2a2a2a ${score}%)`,
+        background: `linear-gradient(to right, ${color} ${score}%, ${T.border.base} ${score}%)`,
       }} />
       <span style={{ color, fontWeight: 600, fontSize: 12 }}>{score}</span>
-      <span style={{ color: '#666', fontSize: 11 }}>{label}</span>
+      <span style={{ color: T.color.dim, fontSize: 11 }}>{label}</span>
     </span>
   );
 }
@@ -224,8 +228,8 @@ export default function ScalingPlan({ campaigns, thresholds }) {
     return (
       <div style={s.emptyState}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
-        <div style={{ color: '#888', fontWeight: 600, marginBottom: 6 }}>No campaign data uploaded</div>
-        <div>Upload a Campaign Report CSV to generate the scaling plan</div>
+        <div style={{ color: T.color.muted, fontWeight: 600, marginBottom: 6, fontFamily: T.font.heading }}>No campaign data uploaded</div>
+        <div style={{ fontFamily: T.font.mono }}>Upload a Campaign Report CSV to generate the scaling plan</div>
       </div>
     );
   }
@@ -244,9 +248,9 @@ export default function ScalingPlan({ campaigns, thresholds }) {
             {stats.scaleCount}
           </div>
         </div>
-        <div style={{ ...s.summaryCard, borderColor: stats.optimizeCount > 0 ? '#3b82f633' : '#1e1e1e' }}>
+        <div style={{ ...s.summaryCard, borderColor: stats.optimizeCount > 0 ? `${T.color.cyan}33` : T.border.base }}>
           <div style={s.summaryLabel}>Optimize</div>
-          <div style={{ ...s.summaryValue, color: stats.optimizeCount > 0 ? '#3b82f6' : '#555' }}>
+          <div style={{ ...s.summaryValue, color: stats.optimizeCount > 0 ? T.color.cyan : T.color.dim }}>
             {stats.optimizeCount}
           </div>
         </div>
@@ -296,8 +300,8 @@ export default function ScalingPlan({ campaigns, thresholds }) {
               {count > 0 && (
                 <span style={{
                   marginLeft: 5,
-                  background:  isActive ? tabColor : '#333',
-                  color:       isActive ? '#fff' : '#999',
+                  background:  isActive ? tabColor : 'rgba(255,255,255,0.10)',
+                  color:       isActive ? '#05080f' : T.color.dim,
                   borderRadius: 8, padding: '1px 6px', fontSize: 10, fontWeight: 700,
                 }}>
                   {count}
@@ -329,9 +333,9 @@ export default function ScalingPlan({ campaigns, thresholds }) {
         <button
           style={{
             ...s.actionBtn(false),
-            color:      displayRows.length ? '#22c55e' : '#444',
-            border:     displayRows.length ? '1px solid #22c55e44' : '1px solid #333',
-            background: displayRows.length ? '#22c55e11' : 'transparent',
+            color:      displayRows.length ? T.color.green : T.color.dim,
+            border:     displayRows.length ? `1px solid ${T.color.green}44` : `1px solid ${T.border.subtle}`,
+            background: displayRows.length ? `${T.color.green}11` : 'transparent',
             cursor:     displayRows.length ? 'pointer' : 'not-allowed',
           }}
           disabled={!displayRows.length}
@@ -346,7 +350,7 @@ export default function ScalingPlan({ campaigns, thresholds }) {
       {/* ── Table ── */}
       {displayRows.length === 0 ? (
         <div style={{ ...s.emptyState, padding: '40px 20px' }}>
-          <div style={{ color: '#888' }}>No campaigns match this filter</div>
+          <div style={{ color: T.color.dim }}>No campaigns match this filter</div>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -369,7 +373,7 @@ export default function ScalingPlan({ campaigns, thresholds }) {
               {displayRows.map((row, i) => (
                 <tr
                   key={row.campaignName + i}
-                  style={{ background: i % 2 === 0 ? 'transparent' : '#090909' }}
+                  style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                 >
                   {/* Campaign name */}
                   <td style={{ ...s.td, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -384,12 +388,12 @@ export default function ScalingPlan({ campaigns, thresholds }) {
                   </td>
 
                   {/* Sales */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>
+                  <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
                     {fmtCurrency(row.totalSales)}
                   </td>
 
                   {/* Orders */}
-                  <td style={{ ...s.td, textAlign: 'right', color: '#fff', fontWeight: 700 }}>
+                  <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
                     {fmtNum(row.totalOrders, 0)}
                   </td>
 
@@ -438,10 +442,10 @@ export default function ScalingPlan({ campaigns, thresholds }) {
 
                   {/* Reason + next step */}
                   <td style={s.td}>
-                    <div style={{ color: '#888', fontSize: 11, marginBottom: 5 }}>
+                    <div style={{ color: T.color.muted, fontSize: 11, marginBottom: 5 }}>
                       {row.reason}
                     </div>
-                    <div style={{ color: '#555', fontSize: 11, fontStyle: 'italic' }}>
+                    <div style={{ color: T.color.dim, fontSize: 11, fontStyle: 'italic' }}>
                       {row.nextStep}
                     </div>
                   </td>
@@ -456,8 +460,8 @@ export default function ScalingPlan({ campaigns, thresholds }) {
       {plan.length > 0 && (
         <div style={{
           marginTop: 16, padding: '10px 14px',
-          background: '#3b82f608', border: '1px solid #3b82f622',
-          borderRadius: 6, color: '#555', fontSize: 11,
+          background: 'rgba(6,182,212,0.05)', border: `1px solid rgba(6,182,212,0.15)`,
+          borderRadius: T.radius.sm, color: T.color.dim, fontSize: 11, fontFamily: T.font.mono,
         }}>
           This plan is for review only — no changes are made to Amazon Ads automatically.
           Use the Export CSV to share with your team or import into your own tracking sheet.

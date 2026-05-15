@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, Copy, CheckCircle } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
 import { buildReadinessPlan, summariseReadiness, READINESS_META } from '../utils/adReadinessScore.js';
+import { T } from '../theme.js';
 
 // ── Filter tab definitions ─────────────────────────────────────────────────────
 const FILTER_TABS = [
@@ -109,44 +110,47 @@ function buildSummaryText(plan, stats) {
 const s = {
   summaryBar: { display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 },
   summaryCard: {
-    background: '#0d0d0d', border: '1px solid #1e1e1e',
-    borderRadius: 8, padding: '12px 18px', minWidth: 130,
+    ...T.glass.card,
+    borderRadius: T.radius.md, padding: '12px 18px', minWidth: 130,
   },
   summaryLabel: {
-    color: '#555', fontSize: 11, fontWeight: 600,
-    textTransform: 'uppercase', letterSpacing: '0.05em',
+    color: T.color.dim, fontSize: 11, fontWeight: 600,
+    textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono,
   },
-  summaryValue: { color: '#fff', fontSize: 20, fontWeight: 700, marginTop: 2 },
+  summaryValue: { color: T.color.white, fontSize: 20, fontWeight: 700, marginTop: 2, fontFamily: T.font.heading },
   filterRow: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 },
   filterBtn: {
-    padding: '5px 12px', borderRadius: 6, border: '1px solid #1e1e1e',
-    background: 'transparent', color: '#666', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    padding: '5px 12px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    fontFamily: T.font.mono,
   },
   searchBox: {
-    marginLeft: 'auto', background: '#0d0d0d', border: '1px solid #1e1e1e',
-    borderRadius: 6, color: '#ccc', padding: '5px 10px', fontSize: 12,
-    outline: 'none', width: 220,
+    marginLeft: 'auto', background: T.bg.input, border: `1px solid ${T.border.input}`,
+    borderRadius: T.radius.sm, color: T.color.muted, padding: '5px 10px', fontSize: 12,
+    outline: 'none', width: 220, fontFamily: T.font.mono,
   },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
-    textAlign: 'left', color: '#555', fontSize: 11, fontWeight: 600,
+    textAlign: 'left', color: T.color.dim, fontSize: 11, fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    padding: '8px 10px', borderBottom: '1px solid #1a1a1a', whiteSpace: 'nowrap',
+    padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap',
+    background: T.bg.panel, fontFamily: T.font.mono,
   },
   td: {
-    padding: '11px 10px', borderBottom: '1px solid #111',
-    color: '#ccc', fontSize: 12, verticalAlign: 'top',
+    padding: '11px 10px', borderBottom: `1px solid ${T.border.subtle}`,
+    color: T.color.muted, fontSize: 12, verticalAlign: 'top', fontFamily: T.font.mono,
   },
-  emptyState: { textAlign: 'center', padding: '60px 20px', color: '#555', fontSize: 13 },
+  emptyState: { textAlign: 'center', padding: '60px 20px', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
 };
 
 function actionBtn(active, color = '#22c55e') {
   return {
     display: 'flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-    border:      active ? `1px solid ${color}44` : '1px solid #1e1e1e',
+    padding: '6px 14px', borderRadius: T.radius.sm, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+    fontFamily: T.font.heading,
+    border:      active ? `1px solid ${color}44` : `1px solid ${T.border.subtle}`,
     background:  active ? `${color}11`           : 'transparent',
-    color:       active ? color                  : '#666',
+    color:       active ? color                  : T.color.dim,
   };
 }
 
@@ -156,7 +160,7 @@ function ScoreBar({ score, color }) {
     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{
         display: 'inline-block', width: 36, height: 5, borderRadius: 3,
-        background: `linear-gradient(to right, ${color} ${score}%, #2a2a2a ${score}%)`,
+        background: `linear-gradient(to right, ${color} ${score}%, ${T.border.base} ${score}%)`,
         flexShrink: 0,
       }} />
       <span style={{ color, fontWeight: 700, fontSize: 12 }}>{score}</span>
@@ -225,8 +229,8 @@ export default function ProductReadiness({ products, thresholds }) {
     return (
       <div style={s.emptyState}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>📦</div>
-        <div style={{ color: '#888', fontWeight: 600, marginBottom: 6 }}>No product data uploaded</div>
-        <div>Upload an Advertised Product Report CSV to generate readiness scores</div>
+        <div style={{ color: T.color.muted, fontWeight: 600, marginBottom: 6, fontFamily: T.font.heading }}>No product data uploaded</div>
+        <div style={{ fontFamily: T.font.mono }}>Upload an Advertised Product Report CSV to generate readiness scores</div>
       </div>
     );
   }
@@ -262,9 +266,9 @@ export default function ProductReadiness({ products, thresholds }) {
         )}
 
         {stats.monitorCount > 0 && (
-          <div style={{ ...s.summaryCard, borderColor: '#3b82f633' }}>
+          <div style={{ ...s.summaryCard, borderColor: `${T.color.cyan}33` }}>
             <div style={s.summaryLabel}>Monitor</div>
-            <div style={{ ...s.summaryValue, color: '#3b82f6' }}>{stats.monitorCount}</div>
+            <div style={{ ...s.summaryValue, color: T.color.cyan }}>{stats.monitorCount}</div>
           </div>
         )}
 
@@ -301,8 +305,8 @@ export default function ProductReadiness({ products, thresholds }) {
               {count > 0 && (
                 <span style={{
                   marginLeft: 5,
-                  background:  isActive ? tabColor : '#333',
-                  color:       isActive ? '#fff' : '#999',
+                  background:  isActive ? tabColor : 'rgba(255,255,255,0.10)',
+                  color:       isActive ? '#05080f' : T.color.dim,
                   borderRadius: 8, padding: '1px 6px', fontSize: 10, fontWeight: 700,
                 }}>
                   {count}
@@ -351,7 +355,7 @@ export default function ProductReadiness({ products, thresholds }) {
       {/* ── Table ── */}
       {displayRows.length === 0 ? (
         <div style={{ ...s.emptyState, padding: '40px 20px' }}>
-          <div style={{ color: '#888' }}>No products match this filter</div>
+          <div style={{ color: T.color.dim }}>No products match this filter</div>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -378,12 +382,12 @@ export default function ProductReadiness({ products, thresholds }) {
                 return (
                   <tr
                     key={id + i}
-                    style={{ background: i % 2 === 0 ? 'transparent' : '#090909' }}
+                    style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
                   >
                     {/* ASIN / SKU */}
-                    <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 11, color: '#e2e8f0' }}>
+                    <td style={{ ...s.td, fontFamily: T.font.mono, fontSize: 11, color: T.color.white }}>
                       {row.asin && <div style={{ fontWeight: 600 }}>{row.asin}</div>}
-                      {row.sku  && <div style={{ color: '#666', fontSize: 10 }}>{row.sku}</div>}
+                      {row.sku  && <div style={{ color: T.color.dim, fontSize: 10 }}>{row.sku}</div>}
                     </td>
 
                     {/* Score bar */}
@@ -408,12 +412,12 @@ export default function ProductReadiness({ products, thresholds }) {
                     </td>
 
                     {/* Sales */}
-                    <td style={{ ...s.td, textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>
+                    <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
                       {fmtCurrency(row.totalSales)}
                     </td>
 
                     {/* Orders */}
-                    <td style={{ ...s.td, textAlign: 'right', color: '#fff', fontWeight: 700 }}>
+                    <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
                       {fmtNum(row.totalOrders, 0)}
                     </td>
 
@@ -448,12 +452,12 @@ export default function ProductReadiness({ products, thresholds }) {
                     </td>
 
                     {/* Reason */}
-                    <td style={{ ...s.td, color: '#777', fontSize: 11, maxWidth: 220, whiteSpace: 'normal' }}>
+                    <td style={{ ...s.td, color: T.color.dim, fontSize: 11, maxWidth: 220, whiteSpace: 'normal' }}>
                       {row.reason}
                     </td>
 
                     {/* Recommended action */}
-                    <td style={{ ...s.td, color: '#555', fontSize: 11, fontStyle: 'italic', maxWidth: 220, whiteSpace: 'normal' }}>
+                    <td style={{ ...s.td, color: T.color.dim, fontSize: 11, fontStyle: 'italic', maxWidth: 220, whiteSpace: 'normal' }}>
                       {row.action}
                     </td>
                   </tr>
@@ -468,8 +472,8 @@ export default function ProductReadiness({ products, thresholds }) {
       {plan.length > 0 && (
         <div style={{
           marginTop: 16, padding: '10px 14px',
-          background: '#3b82f608', border: '1px solid #3b82f622',
-          borderRadius: 6, color: '#555', fontSize: 11,
+          background: 'rgba(6,182,212,0.05)', border: `1px solid rgba(6,182,212,0.15)`,
+          borderRadius: T.radius.sm, color: T.color.dim, fontSize: 11, fontFamily: T.font.mono,
         }}>
           Readiness scores are for review only — no changes are made to Amazon Ads automatically.
           Scores update automatically when you change threshold settings or upload new data.

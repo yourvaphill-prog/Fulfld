@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, TrendingUp, AlertTriangle } from 'lucide-react';
+import { T } from '../theme.js';
 
 const SEVERITY_STYLE = {
   HIGH:        { color: '#ef4444', bg: '#ef444411', border: '#ef444433', icon: AlertCircle,   label: 'High Priority' },
@@ -17,41 +18,44 @@ const s = {
   container: { display: 'flex', flexDirection: 'column', gap: 10 },
   filters:   { display: 'flex', gap: 8, flexWrap: 'wrap' },
   filterBtn: {
-    padding: '5px 12px', borderRadius: 20, border: '1px solid #2a2a2a',
-    background: 'transparent', color: '#888', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600,
+    padding: '5px 12px', borderRadius: T.radius.pill, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer',
+    fontSize: 12, fontWeight: 600, fontFamily: T.font.mono,
   },
   card: {
-    borderRadius: 8, padding: '14px 16px',
+    borderRadius: T.radius.md, padding: '14px 16px',
     display: 'flex', flexDirection: 'column', gap: 6,
   },
   cardHeader:  { display: 'flex', alignItems: 'center', gap: 8 },
-  headline:    { fontWeight: 700, fontSize: 14, flex: 1 },
-  entity:      { fontSize: 11, color: '#888', marginTop: 2 },
-  explanation: { fontSize: 13, color: '#aaa', lineHeight: 1.5 },
-  action:      { fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginTop: 2 },
+  headline:    { fontWeight: 700, fontSize: 14, flex: 1, fontFamily: T.font.heading },
+  entity:      { fontSize: 11, color: T.color.dim, marginTop: 2, fontFamily: T.font.mono },
+  explanation: { fontSize: 13, color: T.color.muted, lineHeight: 1.5, fontFamily: T.font.mono },
+  action:      { fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginTop: 2, fontFamily: T.font.mono },
   badge: {
-    borderRadius: 4, padding: '2px 7px', fontSize: 10,
-    fontWeight: 700, textTransform: 'uppercase',
+    borderRadius: T.radius.sm, padding: '2px 7px', fontSize: 10,
+    fontWeight: 700, textTransform: 'uppercase', fontFamily: T.font.mono,
   },
   cardFooter: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 4, flexWrap: 'wrap', gap: 8,
   },
   trackBtn: {
-    padding: '5px 13px', borderRadius: 6, border: '1px solid #3b82f655',
-    background: '#3b82f611', color: '#60a5fa', cursor: 'pointer',
-    fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
+    padding: '5px 13px', borderRadius: T.radius.sm,
+    border: 'rgba(6,182,212,0.35) 1px solid',
+    background: 'rgba(6,182,212,0.08)', color: T.color.cyan, cursor: 'pointer',
+    fontSize: 12, fontWeight: 700, transition: T.transition.fast,
     display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+    fontFamily: T.font.heading,
   },
   trackedBadge: {
-    padding: '5px 13px', borderRadius: 6, border: '1px solid #22c55e44',
-    background: '#22c55e11', color: '#22c55e',
+    padding: '5px 13px', borderRadius: T.radius.sm, border: `1px solid ${T.color.green}44`,
+    background: `${T.color.green}11`, color: T.color.green,
     fontSize: 12, fontWeight: 700,
     display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+    fontFamily: T.font.heading,
   },
-  empty: { textAlign: 'center', padding: '40px 0', color: '#444', fontSize: 13 },
-  count: { color: '#555', fontSize: 12 },
+  empty: { textAlign: 'center', padding: '40px 0', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
+  count: { color: T.color.dim, fontSize: 12, fontFamily: T.font.mono },
 };
 
 export default function RecommendationList({ recommendations, trackedFingerprints = new Set(), onTrackAction }) {
@@ -136,12 +140,12 @@ export default function RecommendationList({ recommendations, trackedFingerprint
                   style={s.trackBtn}
                   onClick={() => onTrackAction?.(rec)}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background   = '#3b82f622';
-                    e.currentTarget.style.borderColor  = '#3b82f688';
+                    e.currentTarget.style.background  = 'rgba(6,182,212,0.18)';
+                    e.currentTarget.style.borderColor = 'rgba(6,182,212,0.60)';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background   = '#3b82f611';
-                    e.currentTarget.style.borderColor  = '#3b82f655';
+                    e.currentTarget.style.background  = 'rgba(6,182,212,0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(6,182,212,0.35)';
                   }}
                   title="Add to Action Tracker"
                 >

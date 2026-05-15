@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { fmtCurrency, fmtPct, fmtNum } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
 const TABS = [
-  { key: 'winners', label: 'Winners', color: '#22c55e' },
-  { key: 'wasted', label: 'Wasted Spend', color: '#ef4444' },
-  { key: 'lowctr', label: 'Low CTR', color: '#eab308' },
+  { key: 'winners', label: 'Winners',           color: '#22c55e' },
+  { key: 'wasted',  label: 'Wasted Spend',      color: '#ef4444' },
+  { key: 'lowctr',  label: 'Low CTR',           color: '#eab308' },
   { key: 'highcpc', label: 'High CPC / Low CVR', color: '#f97316' },
 ];
 
@@ -12,26 +13,27 @@ const s = {
   container: { display: 'flex', flexDirection: 'column', gap: 12 },
   tabBar: { display: 'flex', gap: 6, flexWrap: 'wrap' },
   tab: {
-    padding: '6px 14px', borderRadius: 6, border: '1px solid #2a2a2a',
-    background: 'transparent', color: '#888', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
+    padding: '6px 14px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
+    background: 'transparent', color: T.color.dim, cursor: 'pointer',
+    fontSize: 12, fontWeight: 600, transition: T.transition.fast, fontFamily: T.font.mono,
   },
   toolbar: { display: 'flex', gap: 10, alignItems: 'center' },
   searchInput: {
-    background: '#111', border: '1px solid #2a2a2a', borderRadius: 6,
-    color: '#ccc', padding: '6px 12px', fontSize: 13, flex: 1, outline: 'none',
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '6px 12px', fontSize: 13, flex: 1, outline: 'none',
+    fontFamily: T.font.mono,
   },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
   th: {
-    background: '#0a0a0a', color: '#888', fontWeight: 600,
+    background: T.bg.panel, color: T.color.dim, fontWeight: 600,
     padding: '8px 12px', textAlign: 'left', fontSize: 11,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    borderBottom: '1px solid #1e1e1e', whiteSpace: 'nowrap',
+    borderBottom: `1px solid ${T.border.base}`, whiteSpace: 'nowrap', fontFamily: T.font.mono,
   },
-  td: { padding: '9px 12px', borderBottom: '1px solid #141414', color: '#ccc', whiteSpace: 'nowrap' },
-  empty: { textAlign: 'center', padding: '40px 0', color: '#444', fontSize: 13 },
-  actionBadge: { borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600 },
+  td: { padding: '9px 12px', borderBottom: `1px solid ${T.border.subtle}`, color: T.color.muted, whiteSpace: 'nowrap', fontFamily: T.font.mono },
+  empty: { textAlign: 'center', padding: '40px 0', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
+  actionBadge: { borderRadius: T.radius.sm, padding: '2px 8px', fontSize: 11, fontWeight: 600, fontFamily: T.font.mono },
 };
 
 function categorize(rows, thresholds) {
@@ -54,11 +56,11 @@ function categorize(rows, thresholds) {
 
 function TermRow({ row, action, actionColor, i, thresholds }) {
   return (
-    <tr style={{ background: i % 2 === 0 ? 'transparent' : '#090909' }}>
-      <td style={{ ...s.td, color: '#e2e8f0', maxWidth: 240, whiteSpace: 'normal' }}>
+    <tr style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+      <td style={{ ...s.td, color: T.color.white, maxWidth: 240, whiteSpace: 'normal' }}>
         {row.searchTerm ?? row.targeting ?? '—'}
       </td>
-      <td style={{ ...s.td, color: '#aaa', fontSize: 12 }}>{row.campaignName ?? '—'}</td>
+      <td style={{ ...s.td, color: T.color.dim, fontSize: 12 }}>{row.campaignName ?? '—'}</td>
       <td style={s.td}>{row.matchType ?? '—'}</td>
       <td style={s.td}>{fmtNum(row.impressions, 0)}</td>
       <td style={s.td}>{fmtNum(row.clicks, 0)}</td>
@@ -70,7 +72,7 @@ function TermRow({ row, action, actionColor, i, thresholds }) {
       <td style={s.td}>
         {row.acos === 'NO_SALES'
           ? <span style={{ color: '#ef4444', fontSize: 11 }}>No Sales</span>
-          : <span style={{ color: typeof row.acos === 'number' && row.acos <= thresholds.targetACoS ? '#22c55e' : '#f97316' }}>
+          : <span style={{ color: typeof row.acos === 'number' && row.acos <= thresholds.targetACoS ? T.color.green : T.color.orange }}>
               {fmtPct(row.acos)}
             </span>
         }
@@ -150,7 +152,7 @@ export default function SearchTermTable({ searchTerms, thresholds }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        <span style={{ color: '#555', fontSize: 12 }}>{rows.length} terms</span>
+        <span style={{ color: T.color.dim, fontSize: 12, fontFamily: T.font.mono }}>{rows.length} terms</span>
       </div>
 
       {rows.length === 0 ? (

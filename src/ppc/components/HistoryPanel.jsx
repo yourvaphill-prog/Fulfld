@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2, FileText, Clock } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtRoas } from '../utils/metricCalculator.js';
+import { T } from '../theme.js';
 
 // ── Metric definitions ─────────────────────────────────────────────────────────
 const METRICS = [
@@ -59,45 +60,46 @@ const s = {
     justifyContent: 'center', padding: '80px 24px', gap: 14, textAlign: 'center',
   },
   hint: {
-    color: '#333', fontSize: 12, maxWidth: 400, lineHeight: 1.7,
+    color: T.color.dim, fontSize: 12, maxWidth: 400, lineHeight: 1.7, fontFamily: T.font.mono,
   },
   grid: { display: 'flex', flexDirection: 'column', gap: 14 },
-  caption: { color: '#444', fontSize: 11, marginBottom: 4 },
+  caption: { color: T.color.dim, fontSize: 11, marginBottom: 4, fontFamily: T.font.mono },
   card: {
-    background: '#0d0d14', border: '1px solid #1e1e2e',
-    borderRadius: 10, padding: '20px 24px',
+    ...T.glass.card,
+    borderRadius: T.radius.lg,
+    padding: '20px 24px',
   },
   cardHeader: {
     display: 'flex', alignItems: 'flex-start',
     justifyContent: 'space-between', marginBottom: 16, gap: 12,
   },
-  weekLabel: { color: '#fff', fontWeight: 700, fontSize: 16, marginBottom: 4 },
+  weekLabel: { color: T.color.white, fontWeight: 700, fontSize: 16, marginBottom: 4, fontFamily: T.font.heading },
   savedAt: {
-    color: '#444', fontSize: 11,
-    display: 'flex', alignItems: 'center', gap: 4,
+    color: T.color.dim, fontSize: 11,
+    display: 'flex', alignItems: 'center', gap: 4, fontFamily: T.font.mono,
   },
   metrics: {
     display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
     gap: 10, marginBottom: 12,
   },
-  metricBox: { background: '#070710', borderRadius: 6, padding: '10px 12px' },
+  metricBox: { background: T.bg.panel, borderRadius: T.radius.sm, padding: '10px 12px', border: `1px solid ${T.border.subtle}` },
   metricLabel: {
-    color: '#444', fontSize: 10, letterSpacing: '0.06em',
-    textTransform: 'uppercase', marginBottom: 4,
+    color: T.color.dim, fontSize: 10, letterSpacing: '0.06em',
+    textTransform: 'uppercase', marginBottom: 4, fontFamily: T.font.mono,
   },
-  metricValue: { color: '#ccc', fontSize: 14, fontWeight: 700 },
+  metricValue: { color: T.color.muted, fontSize: 14, fontWeight: 700, fontFamily: T.font.heading },
   files: { display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   fileTag: {
-    background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 4,
-    padding: '3px 8px', fontSize: 10, color: '#444',
-    display: 'flex', alignItems: 'center', gap: 4,
+    background: T.bg.card, border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.sm,
+    padding: '3px 8px', fontSize: 10, color: T.color.dim,
+    display: 'flex', alignItems: 'center', gap: 4, fontFamily: T.font.mono,
   },
   deleteBtn: {
-    background: 'transparent', border: '1px solid #2a1010',
-    borderRadius: 6, padding: '7px 10px', color: '#4a2020',
+    background: 'transparent', border: `1px solid ${T.border.subtle}`,
+    borderRadius: T.radius.sm, padding: '7px 10px', color: T.color.dim,
     cursor: 'pointer', fontSize: 11,
     display: 'flex', alignItems: 'center', gap: 5,
-    flexShrink: 0, transition: 'all 0.15s',
+    flexShrink: 0, transition: T.transition.fast,
   },
 };
 
@@ -107,10 +109,10 @@ export default function HistoryPanel({ history, onDelete }) {
     return (
       <div style={s.empty}>
         <div style={{ fontSize: 36 }}>📅</div>
-        <div style={{ color: '#555', fontSize: 14, fontWeight: 600 }}>No saved weeks yet</div>
+        <div style={{ color: T.color.muted, fontSize: 14, fontWeight: 600, fontFamily: T.font.heading }}>No saved weeks yet</div>
         <div style={s.hint}>
           Upload your Amazon Ads reports, then click{' '}
-          <span style={{ color: '#3b82f6' }}>Save This Week</span>{' '}
+          <span style={{ color: T.color.cyan }}>Save This Week</span>{' '}
           in the Weekly Report tab to capture a snapshot. Saved weeks show
           ACoS and ROAS deltas week-over-week so you can track progress.
         </div>
@@ -143,12 +145,12 @@ export default function HistoryPanel({ history, onDelete }) {
                 onClick={() => onDelete(entry.id)}
                 title="Delete this snapshot"
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = '#ef4444';
-                  e.currentTarget.style.color = '#ef4444';
+                  e.currentTarget.style.borderColor = T.color.red;
+                  e.currentTarget.style.color = T.color.red;
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = '#2a1010';
-                  e.currentTarget.style.color = '#4a2020';
+                  e.currentTarget.style.borderColor = T.border.subtle;
+                  e.currentTarget.style.color = T.color.dim;
                 }}
               >
                 <Trash2 size={13} /> Delete
