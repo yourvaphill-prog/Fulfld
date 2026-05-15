@@ -12,6 +12,7 @@ import HistoryPanel from './components/HistoryPanel.jsx';
 import NegativeKeywordBuilder from './components/NegativeKeywordBuilder.jsx';
 import WinningKeywordBuilder from './components/WinningKeywordBuilder.jsx';
 import ScalingPlan from './components/ScalingPlan.jsx';
+import ProductReadiness from './components/ProductReadiness.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { key: 'negatives',       label: 'Neg Keywords' },
   { key: 'winners',         label: 'Win Keywords' },
   { key: 'scaling',         label: 'Scaling Plan' },
+  { key: 'readiness',       label: 'Product Readiness' },
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
@@ -357,6 +359,17 @@ export default function PPCApp() {
           </>
         );
 
+      case 'readiness':
+        return (
+          <>
+            <div style={s.sectionTitle}>Product Ad Readiness</div>
+            <div style={s.sectionSub}>
+              0–100 readiness score per ASIN — identifies which products are ready to scale and which need attention first
+            </div>
+            <ProductReadiness products={products} thresholds={thresholds} />
+          </>
+        );
+
       case 'recommendations':
         return (
           <>
@@ -473,13 +486,32 @@ export default function PPCApp() {
                 }
                 badge = scaleCount || null;
               }
+              if (item.key === 'readiness') {
+                // Badge = number of products meeting Ready to Scale criteria
+                const seen = new Set();
+                let readyCount = 0;
+                for (const p of products) {
+                  const id = p.asin ?? p.sku ?? '';
+                  if (seen.has(id)) continue;
+                  seen.add(id);
+                  const acos = typeof p.acos === 'number' ? p.acos : null;
+                  const roas = typeof p.roas === 'number' ? p.roas : null;
+                  if (
+                    (p.orders ?? 0) >= thresholds.minOrders &&
+                    acos !== null && acos <= thresholds.targetACoS &&
+                    roas !== null && roas >= thresholds.goodROASThreshold
+                  ) readyCount++;
+                }
+                badge = readyCount || null;
+              }
 
               const badgeColor =
-                item.key === 'actions'   ? '#f97316' :
-                item.key === 'history'   ? '#22c55e' :
-                item.key === 'negatives' ? '#ef4444' :
-                item.key === 'winners'   ? '#22c55e' :
-                item.key === 'scaling'   ? '#22c55e' :
+                item.key === 'actions'    ? '#f97316' :
+                item.key === 'history'    ? '#22c55e' :
+                item.key === 'negatives'  ? '#ef4444' :
+                item.key === 'winners'    ? '#22c55e' :
+                item.key === 'scaling'    ? '#22c55e' :
+                item.key === 'readiness'  ? '#22c55e' :
                 '#3b82f6';
 
               return (
