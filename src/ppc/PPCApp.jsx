@@ -11,6 +11,7 @@ import WeeklyReport from './components/WeeklyReport.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
 import NegativeKeywordBuilder from './components/NegativeKeywordBuilder.jsx';
 import WinningKeywordBuilder from './components/WinningKeywordBuilder.jsx';
+import ScalingPlan from './components/ScalingPlan.jsx';
 import ThresholdSettings, { DEFAULT_THRESHOLDS } from './components/ThresholdSettings.jsx';
 import { aggregateMetrics } from './utils/metricCalculator.js';
 import { generateRecommendations } from './utils/recommendationEngine.js';
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { key: 'searchTerms',     label: 'Search Terms' },
   { key: 'negatives',       label: 'Neg Keywords' },
   { key: 'winners',         label: 'Win Keywords' },
+  { key: 'scaling',         label: 'Scaling Plan' },
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'actions',         label: 'Action Tracker' },
   { key: 'report',          label: 'Weekly Report' },
@@ -344,6 +346,17 @@ export default function PPCApp() {
           </>
         );
 
+      case 'scaling':
+        return (
+          <>
+            <div style={s.sectionTitle}>Campaign Scaling Plan</div>
+            <div style={s.sectionSub}>
+              Specific next steps per campaign — based on ACoS, ROAS, CTR, spend, and threshold targets
+            </div>
+            <ScalingPlan campaigns={campaigns} thresholds={thresholds} />
+          </>
+        );
+
       case 'recommendations':
         return (
           <>
@@ -442,12 +455,31 @@ export default function PPCApp() {
                 typeof r.roas === 'number' &&
                 r.roas >= thresholds.goodROASThreshold
               ).length || null;
+              if (item.key === 'scaling') {
+                // Badge = number of campaigns that are Scale Opportunity candidates
+                const seen = new Set();
+                let scaleCount = 0;
+                for (const c of campaigns) {
+                  const name = c.campaignName ?? '';
+                  if (seen.has(name)) continue;
+                  seen.add(name);
+                  const acos  = typeof c.acos  === 'number' ? c.acos  : null;
+                  const roas  = typeof c.roas  === 'number' ? c.roas  : null;
+                  if (
+                    (c.orders ?? 0) >= thresholds.minOrders &&
+                    acos !== null && acos <= thresholds.targetACoS &&
+                    roas !== null && roas >= thresholds.goodROASThreshold
+                  ) scaleCount++;
+                }
+                badge = scaleCount || null;
+              }
 
               const badgeColor =
                 item.key === 'actions'   ? '#f97316' :
                 item.key === 'history'   ? '#22c55e' :
                 item.key === 'negatives' ? '#ef4444' :
                 item.key === 'winners'   ? '#22c55e' :
+                item.key === 'scaling'   ? '#22c55e' :
                 '#3b82f6';
 
               return (
