@@ -1,5 +1,4 @@
 import React from 'react';
-import fufldLogo from './assets/fufld-logo.png';
 
 // ── Design tokens (self-contained — no dep on theme.js) ───────────────────────
 const CYAN   = '#06b6d4';
@@ -55,13 +54,6 @@ export default function CommandCenterLanding({ onSelectModule }) {
 
       {/* ── Hero ── */}
       <div style={{ textAlign: 'center', marginBottom: 52 }}>
-
-        {/* Logo — no background plate, PNG transparency used directly */}
-        <img
-          src={fufldLogo}
-          alt="FULFLD"
-          style={{ height: 40, width: 'auto', display: 'block', margin: '0 auto 28px' }}
-        />
 
         <h1 style={{
           color: '#e2e8f0',

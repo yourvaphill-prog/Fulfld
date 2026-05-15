@@ -738,15 +738,9 @@ export default function App() {
         display: 'flex', alignItems: 'center', padding: '0 24px', height: 54,
         gap: 24,
       }}>
-        {/* Logo — FUFLD image + module-aware title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        {/* Logo — FUFLD image only */}
+        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <img src={fufldLogo} alt="FULFLD" style={{ height: 28, width: 'auto', display: 'block' }} />
-          <span style={{
-            color: page === 'ppc' ? '#06b6d4' : page === 'home' ? '#a78bfa' : G,
-            fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', fontFamily: "'Syne', sans-serif",
-          }}>
-            {page === 'ppc' ? 'PPC' : page === 'home' ? 'CC' : 'SCOUT'}
-          </span>
         </div>
 
         {/* Nav — Brand Scout tabs when in BS; labels when in PPC/Home */}
