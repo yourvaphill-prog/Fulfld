@@ -61,7 +61,7 @@ export default function CommandCenterLanding({ onSelectModule }) {
           fontWeight: 800,
           letterSpacing: '0.05em',
           margin: '0 0 12px',
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           textTransform: 'uppercase',
         }}>
           <span style={{ color: CYAN }}>Command Center</span>
@@ -72,7 +72,7 @@ export default function CommandCenterLanding({ onSelectModule }) {
           fontSize: 13,
           margin: 0,
           letterSpacing: '0.04em',
-          fontFamily: "'DM Mono', monospace",
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           Select a module to begin your session
         </p>
@@ -103,7 +103,7 @@ export default function CommandCenterLanding({ onSelectModule }) {
         fontSize: 11,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}>
         FUFLD · Fulfld Brand Intelligence Platform
       </div>
@@ -175,14 +175,14 @@ function ModuleCard({ module: mod, onOpen }) {
         <div>
           <div style={{
             color: '#e2e8f0', fontSize: 18, fontWeight: 700,
-            letterSpacing: '0.02em', fontFamily: "'Syne', sans-serif",
+            letterSpacing: '0.02em', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {mod.name}
           </div>
           <div style={{
             color: mod.accent, fontSize: 11, fontWeight: 600,
             letterSpacing: '0.05em', marginTop: 2,
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {mod.tagline}
           </div>
@@ -196,7 +196,7 @@ function ModuleCard({ module: mod, onOpen }) {
       <p style={{
         color: '#64748b', fontSize: 12, lineHeight: 1.75,
         margin: '0 0 18px',
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}>
         {mod.description}
       </p>
@@ -211,7 +211,7 @@ function ModuleCard({ module: mod, onOpen }) {
             }}>✓</span>
             <span style={{
               color: '#94a3b8', fontSize: 12,
-              lineHeight: '18px', fontFamily: "'DM Mono', monospace",
+              lineHeight: '18px', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}>
               {feat}
             </span>
@@ -231,7 +231,7 @@ function ModuleCard({ module: mod, onOpen }) {
           color: hovered ? '#05080f' : mod.accent,
           fontSize: 12,
           fontWeight: 700,
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           cursor: 'pointer',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',

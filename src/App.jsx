@@ -34,7 +34,7 @@ function UserPicker({ onSelect }) {
     <div style={{
       position: 'fixed', inset: 0, background: BG,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'DM Mono', monospace", zIndex: 9999,
+      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", zIndex: 9999,
     }}>
       <div style={{
         background: CARD, border: `1px solid ${BORDER}`,
@@ -115,7 +115,7 @@ function LoadingScreen({ message = 'Loading…' }) {
     <div style={{
       position: 'fixed', inset: 0, background: BG,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexDirection: 'column', gap: 16, fontFamily: "'DM Mono', monospace",
+      flexDirection: 'column', gap: 16, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     }}>
       <div style={{ position: 'relative', width: 40, height: 40 }}>
         <div style={{
@@ -160,7 +160,7 @@ function UploadZone({ onFiles, hasData }) {
         borderRadius: 12, padding: '32px 24px', textAlign: 'center',
         background: dragging ? 'rgba(0,255,135,0.04)' : 'rgba(255,255,255,0.01)',
         cursor: 'pointer', transition: 'all 0.2s',
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       <Upload size={24} color={dragging ? G : '#475569'} style={{ marginBottom: 12 }} />
@@ -190,7 +190,7 @@ class KPIErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ maxWidth: 740, margin: '0 auto', padding: '48px 24px', textAlign: 'center', fontFamily: "'DM Mono'" }}>
+        <div style={{ maxWidth: 740, margin: '0 auto', padding: '48px 24px', textAlign: 'center', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           <div style={{ color: '#ef476f', fontSize: 13, marginBottom: 16 }}>
             KPI Settings failed to render.
           </div>
@@ -298,12 +298,12 @@ function KPISettingsPage({ kpiSettings, onSave }) {
   ];
 
   const card  = { background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '20px 24px', marginBottom: 16, backdropFilter: 'blur(8px)' };
-  const secHd = { color: '#64748b', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14, fontFamily: "'DM Mono'" };
-  const lbl   = { color: '#94a3b8', fontSize: 11, fontFamily: "'DM Mono'", marginBottom: 6, display: 'block' };
-  const inp   = { width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 12px', color: '#e2e8f0', fontSize: 12, fontFamily: "'DM Mono'", outline: 'none', boxSizing: 'border-box' };
+  const secHd = { color: '#64748b', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" };
+  const lbl   = { color: '#94a3b8', fontSize: 11, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginBottom: 6, display: 'block' };
+  const inp   = { width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 12px', color: '#e2e8f0', fontSize: 12, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", outline: 'none', boxSizing: 'border-box' };
 
   return (
-    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "'DM Mono'" }}>
+    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <h2 style={{ color: '#f1f5f9', fontSize: 18, fontWeight: 700, margin: '0 0 24px', letterSpacing: '0.05em' }}>
         KPI SETTINGS
       </h2>
@@ -365,7 +365,7 @@ function KPISettingsPage({ kpiSettings, onSave }) {
           <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <input type="checkbox" id={f.key} checked={!!safeLocal[f.key]} onChange={() => toggleBool(f.key)}
               style={{ width: 14, height: 14, accentColor: G, cursor: 'pointer' }} />
-            <label htmlFor={f.key} style={{ color: '#e2e8f0', fontSize: 12, fontFamily: "'DM Mono'", cursor: 'pointer' }}>
+            <label htmlFor={f.key} style={{ color: '#e2e8f0', fontSize: 12, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", cursor: 'pointer' }}>
               {f.label}
             </label>
           </div>
@@ -425,7 +425,7 @@ function ExportPage({ scoredBrands, statuses }) {
   ];
 
   return (
-    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "'DM Mono'" }}>
+    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <h2 style={{ color: '#f1f5f9', fontSize: 18, fontWeight: 700, margin: '0 0 24px', letterSpacing: '0.05em' }}>
         EXPORT
       </h2>
@@ -473,7 +473,7 @@ function DuplicateChecker({ scoredBrands }) {
   };
 
   return (
-    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "'DM Mono'" }}>
+    <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <h2 style={{ color: '#f1f5f9', fontSize: 18, fontWeight: 700, margin: '0 0 24px', letterSpacing: '0.05em' }}>
         DUPLICATE CHECKER
       </h2>
@@ -717,7 +717,7 @@ export default function App() {
   return (
     <div style={{
       height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      fontFamily: "'DM Mono', monospace",
+      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       // Layered background: CSS grid lines → dark overlay → cyber grid image
       backgroundImage: [
         'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.020) 40px)',
@@ -797,7 +797,7 @@ export default function App() {
 
           {/* Cloud syncing indicator */}
           {cloudSyncing && (
-            <span style={{ color: B, fontSize: 10, fontFamily: "'DM Mono'", display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ color: B, fontSize: 10, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", display: 'flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: B, animation: 'spin 1s linear infinite', display: 'inline-block' }} />
               syncing…
             </span>
@@ -1050,11 +1050,11 @@ export default function App() {
             borderBottom: `1px solid ${BORDER}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ color: '#334155', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'DM Mono'" }}>
+            <span style={{ color: '#334155', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               Activity
             </span>
             {onlineUsers.length > 0 && (
-              <span style={{ color: '#334155', fontSize: 10, fontFamily: "'DM Mono'" }}>
+              <span style={{ color: '#334155', fontSize: 10, fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 <span style={{ color: G }}>●</span> {onlineUsers.length} online
               </span>
             )}

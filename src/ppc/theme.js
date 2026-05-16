@@ -75,9 +75,9 @@ export const T = {
   },
 
   font: {
-    heading: "'Syne', sans-serif",
-    body:    "'Syne', sans-serif",
-    mono:    "'DM Mono', monospace",
+    heading: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    body:    "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    mono:    "'DM Mono', 'SFMono-Regular', Consolas, monospace",
   },
 
   radius: {
