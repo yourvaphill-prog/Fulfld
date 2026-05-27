@@ -6,26 +6,44 @@ import { T } from '../theme.js';
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ppc_winners_excluded';
 
+// Orders threshold separating "proven" (high confidence) from "early" (low confidence) winners.
+// minOrders (from Settings) is the gate to appear in the list at all.
+// PROVEN_ORDER_COUNT is the internal gate to earn "High Priority Winner" status.
+const PROVEN_ORDER_COUNT = 3;
+
 const TIER_CONFIG = {
+  // Tier 1 — Proven Winner: 3+ orders, good ACoS, strong ROAS
   1: {
     label:  'High Priority Winner',
-    action: 'Add to Exact Match',
+    action: 'Move to Exact Match — increase bid carefully',
     color:  '#22c55e',
     bg:     '#22c55e11',
     border: '#22c55e33',
     reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)}, ROAS ${fmtRoas(r.roas)} — exceeds all targets`,
+      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)}, ROAS ${fmtRoas(r.roas)} — proven winner, exceeds all targets`,
   },
+  // Tier 2 — Early Winner: 1–2 orders, good ACoS, strong ROAS (promising but limited data)
   2: {
+    label:  'Early Winner',
+    action: 'Add to Exact Match — conservative bid, monitor closely',
+    color:  T.color.cyan,
+    bg:     'rgba(6,182,212,0.10)',
+    border: 'rgba(6,182,212,0.30)',
+    reason: (r, t) =>
+      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)}, ROAS ${fmtRoas(r.roas)} — promising early signal, needs more data`,
+  },
+  // Tier 3 — Test Exact Match: good ACoS but ROAS didn't reach strong threshold
+  3: {
     label:  'Move to Exact Match',
     action: 'Test Exact Match',
     color:  T.color.cyan,
-    bg:     'rgba(6,182,212,0.08)',
-    border: 'rgba(6,182,212,0.25)',
+    bg:     'rgba(6,182,212,0.05)',
+    border: 'rgba(6,182,212,0.18)',
     reason: (r, t) =>
       `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — below target ACoS, isolate in Exact Match`,
   },
-  3: {
+  // Tier 4 — Increase Bid: slightly above ACoS target but still ROAS-positive
+  4: {
     label:  'Increase Bid',
     action: 'Increase Bid Carefully',
     color:  '#f97316',
@@ -34,7 +52,8 @@ const TIER_CONFIG = {
     reason: (r, t) =>
       `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — slightly above target but ROAS ≥ 1; increase bid carefully`,
   },
-  4: {
+  // Tier 5 — Keep Monitoring: converting but well above ACoS target
+  5: {
     label:  'Keep Monitoring',
     action: 'Monitor – Borderline',
     color:  '#eab308',
@@ -48,9 +67,10 @@ const TIER_CONFIG = {
 const FILTER_TABS = [
   { key: 'all',      label: 'All' },
   { key: '1',        label: 'High Priority' },
-  { key: '2',        label: 'Exact Match' },
-  { key: '3',        label: 'Increase Bid' },
-  { key: '4',        label: 'Monitor' },
+  { key: '2',        label: 'Early Winner' },
+  { key: '3',        label: 'Exact Match' },
+  { key: '4',        label: 'Increase Bid' },
+  { key: '5',        label: 'Monitor' },
   { key: 'excluded', label: 'Excluded' },
 ];
 
@@ -70,12 +90,17 @@ function saveExcluded(set) {
 
 // ── Candidate generation ───────────────────────────────────────────────────────
 /**
- * Four-tier classification (first match wins):
- *   Tier 1 — High Priority Winner  : orders >= minOrders AND acos <= targetACoS AND roas >= goodROASThreshold
- *   Tier 2 — Move to Exact Match   : orders > 0 AND acos <= targetACoS  (didn't qualify for Tier 1)
- *   Tier 3 — Increase Bid          : orders > 0 AND acos > targetACoS AND acos <= targetACoS × 1.5 AND roas >= 1
- *   Tier 4 — Keep Monitoring       : orders > 0 AND acos > targetACoS × 1.5
+ * Five-tier classification (first match wins):
  *
+ *   Tier 1 — High Priority Winner  : orders >= PROVEN_ORDER_COUNT(3) AND acos <= targetACoS AND roas >= goodROASThreshold
+ *   Tier 2 — Early Winner          : orders >= minOrders AND orders < PROVEN_ORDER_COUNT AND acos <= targetACoS AND roas >= goodROASThreshold
+ *   Tier 3 — Move to Exact Match   : orders >= minOrders AND acos <= targetACoS  (good ACoS but ROAS below strong threshold)
+ *   Tier 4 — Increase Bid          : orders > 0 AND acos > targetACoS AND acos <= targetACoS × 1.5 AND roas >= 1
+ *   Tier 5 — Keep Monitoring       : orders > 0 AND acos > targetACoS × 1.5
+ *
+ * minOrders (Settings) gates entry to the list entirely.
+ * PROVEN_ORDER_COUNT gates Tier 1 vs Tier 2 — 1–2 orders earn "Early Winner",
+ *   3+ orders earn "High Priority Winner".
  * Terms with orders === 0 are never included.
  * acos === 'NO_SALES' sentinel is skipped.
  * Deduplication by (term + campaign) fingerprint.
@@ -89,8 +114,8 @@ export function buildWinners(searchTerms, thresholds) {
     const term = (row.searchTerm ?? row.targeting ?? '').trim();
     if (!term) continue;
 
-    // Must have at least one order
-    if ((row.orders ?? 0) === 0) continue;
+    // Must meet the minimum orders gate (from Settings — default 1)
+    if ((row.orders ?? 0) < t.minOrders) continue;
 
     // Skip rows with no spend signal
     if ((row.spend ?? 0) === 0 && (row.clicks ?? 0) === 0) continue;
@@ -98,8 +123,9 @@ export function buildWinners(searchTerms, thresholds) {
     // Skip the NO_SALES sentinel (spend > 0, sales = 0 — can't compute real ACoS)
     if (row.acos === 'NO_SALES') continue;
 
-    const acos = typeof row.acos === 'number' ? row.acos : null;
-    const roas = typeof row.roas === 'number' ? row.roas : null;
+    const acos   = typeof row.acos === 'number' ? row.acos : null;
+    const roas   = typeof row.roas === 'number' ? row.roas : null;
+    const orders = row.orders ?? 0;
 
     const fp = `${term.toLowerCase()}::${(row.campaignName ?? '').toLowerCase()}`;
     if (seen.has(fp)) continue;
@@ -108,21 +134,32 @@ export function buildWinners(searchTerms, thresholds) {
     let tier;
 
     if (
-      (row.orders ?? 0) >= t.minOrders &&
+      orders >= PROVEN_ORDER_COUNT &&
       acos !== null && acos <= t.targetACoS &&
       roas !== null && roas >= t.goodROASThreshold
     ) {
+      // Proven winner: 3+ orders, good ACoS, strong ROAS
       tier = 1;
-    } else if (acos !== null && acos <= t.targetACoS && (row.orders ?? 0) > 0) {
+    } else if (
+      orders >= t.minOrders && orders < PROVEN_ORDER_COUNT &&
+      acos !== null && acos <= t.targetACoS &&
+      roas !== null && roas >= t.goodROASThreshold
+    ) {
+      // Early winner: 1–2 orders, good ACoS, strong ROAS — promising but limited data
       tier = 2;
+    } else if (acos !== null && acos <= t.targetACoS && orders >= t.minOrders) {
+      // Good ACoS but ROAS below strong threshold — isolate in Exact Match to gather data
+      tier = 3;
     } else if (
       acos !== null && acos > t.targetACoS &&
       acos <= t.targetACoS * 1.5 &&
       roas !== null && roas >= 1
     ) {
-      tier = 3;
-    } else if (acos !== null && acos > t.targetACoS * 1.5 && (row.orders ?? 0) > 0) {
+      // Slightly above ACoS target but still ROAS-positive
       tier = 4;
+    } else if (acos !== null && acos > t.targetACoS * 1.5 && orders > 0) {
+      // Converting but well above ACoS target — keep monitoring
+      tier = 5;
     } else {
       continue; // can't classify
     }
@@ -130,11 +167,12 @@ export function buildWinners(searchTerms, thresholds) {
     out.push({ ...row, fingerprint: fp, tier });
   }
 
-  // Sort: Tier 1 → ROAS desc, Tier 2 → orders desc, Tier 3/4 → acos asc
+  // Sort: Tier 1/2 → ROAS desc (best proven first, then best early)
+  //       Tier 3 → orders desc, Tier 4/5 → acos asc
   out.sort((a, b) => {
     if (a.tier !== b.tier) return a.tier - b.tier;
-    if (a.tier === 1) return (b.roas ?? 0) - (a.roas ?? 0);
-    if (a.tier === 2) return (b.orders ?? 0) - (a.orders ?? 0);
+    if (a.tier === 1 || a.tier === 2) return (b.roas ?? 0) - (a.roas ?? 0);
+    if (a.tier === 3) return (b.orders ?? 0) - (a.orders ?? 0);
     return (a.acos ?? 0) - (b.acos ?? 0);
   });
 
@@ -308,9 +346,9 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
     });
   }
 
-  // Tier counts for filter tab badges
+  // Tier counts for filter tab badges (tiers 1–5)
   const tierCounts = useMemo(() => {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     for (const r of active) { counts[r.tier] = (counts[r.tier] ?? 0) + 1; }
     return counts;
   }, [active]);
@@ -384,7 +422,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
           let count = null;
           if (tab.key === 'all')      count = active.length;
           if (tab.key === 'excluded') count = excluded_.length;
-          if (['1','2','3','4'].includes(tab.key)) count = tierCounts[Number(tab.key)] ?? 0;
+          if (['1','2','3','4','5'].includes(tab.key)) count = tierCounts[Number(tab.key)] ?? 0;
 
           const cfg = tab.key !== 'all' && tab.key !== 'excluded' ? TIER_CONFIG[Number(tab.key)] : null;
           const activeColor = cfg ? cfg.color : tab.key === 'excluded' ? T.color.dim : T.color.cyan;
