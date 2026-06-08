@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, Component } from 'react';
 import PPCApp from './ppc/PPCApp.jsx';
+import UPCScanner from './upc/UPCScanner.jsx';
 import CommandCenterLanding from './CommandCenterLanding.jsx';
 import ppcBg    from './assets/ppc-bg.jpg';
 import fufldLogo from './assets/fufld-logo.png';
@@ -745,7 +746,7 @@ export default function App() {
 
         {/* Nav — Brand Scout tabs when in BS; labels when in PPC/Home */}
         <nav style={{ display: 'flex', gap: 2, flex: 1, alignItems: 'center' }}>
-          {page !== 'ppc' && page !== 'home' && [
+          {page !== 'ppc' && page !== 'home' && page !== 'upc' && [
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'kpi',       label: 'KPI Settings' },
             { id: 'export',    label: 'Export' },
@@ -763,7 +764,7 @@ export default function App() {
               {label}
             </button>
           ))}
-          {(page === 'ppc' || page === 'home') && (
+          {(page === 'ppc' || page === 'home' || page === 'upc') && (
             <span style={{
               color: '#1e293b', fontSize: 10, letterSpacing: '0.10em',
               textTransform: 'uppercase', paddingLeft: 4,
@@ -810,14 +811,14 @@ export default function App() {
                 onClick={() => setShowModuleSwitcher(s => !s)}
                 style={{
                   background: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${page === 'ppc' ? 'rgba(6,182,212,0.28)' : BORDER}`,
+                  border: `1px solid ${page === 'ppc' ? 'rgba(6,182,212,0.28)' : page === 'upc' ? 'rgba(245,158,11,0.28)' : BORDER}`,
                   borderRadius: 7, padding: '5px 12px',
-                  color: page === 'ppc' ? '#06b6d4' : '#94a3b8',
+                  color: page === 'ppc' ? '#06b6d4' : page === 'upc' ? '#f59e0b' : '#94a3b8',
                   fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
-                {page === 'ppc' ? '⚡ PPC Pilot' : '🔍 Brand Scout'}
+                {page === 'ppc' ? '⚡ PPC Pilot' : page === 'upc' ? '🏷️ UPC Scanner' : '🔍 Brand Scout'}
                 <ChevronDown size={10} />
               </button>
               {showModuleSwitcher && (
@@ -840,11 +841,13 @@ export default function App() {
                     { id: 'home',      label: '⬡ Command Center', accent: '#a78bfa' },
                     { id: 'dashboard', label: '🔍 Brand Scout',    accent: G        },
                     { id: 'ppc',       label: '⚡ PPC Pilot',      accent: '#06b6d4' },
+                    { id: 'upc',       label: '🏷️ UPC Scanner',    accent: '#f59e0b' },
                   ].map(({ id, label, accent }) => {
                     const active =
                       id === 'ppc'  ? page === 'ppc' :
+                      id === 'upc'  ? page === 'upc' :
                       id === 'home' ? false :          // never "active" — it's a home link
-                      page !== 'ppc' && page !== 'home';
+                      page !== 'ppc' && page !== 'upc' && page !== 'home';
                     return (
                       <button key={id}
                         onClick={() => { setPage(id); setShowModuleSwitcher(false); }}
@@ -973,7 +976,7 @@ export default function App() {
 
       {/* ── Main content ── */}
       {/* Brand Scout — always mounted, hidden when on PPC or home (preserves state) */}
-      <div style={{ display: (page === 'ppc' || page === 'home') ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: (page === 'ppc' || page === 'home' || page === 'upc') ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Content area ── */}
         <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
@@ -1068,6 +1071,11 @@ export default function App() {
       {/* PPC Pilot — always mounted to preserve uploaded data across tab switches */}
       <div style={{ display: page === 'ppc' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
         <PPCApp onSwitchModule={setPage} />
+      </div>
+
+      {/* UPC Scanner — always mounted to preserve scan state across tab switches */}
+      <div style={{ display: page === 'upc' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
+        <UPCScanner onSwitchModule={setPage} userName={userName} />
       </div>
 
       {/* ── Brand detail slide-in ── */}

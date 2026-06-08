@@ -3,6 +3,7 @@ import React from 'react';
 // ── Design tokens (self-contained — no dep on theme.js) ───────────────────────
 const CYAN   = '#06b6d4';
 const GREEN  = '#22c55e';
+const ORANGE = '#f59e0b';
 const BORDER = 'rgba(255,255,255,0.072)';
 
 // ── Module definitions ─────────────────────────────────────────────────────────
@@ -35,6 +36,21 @@ const MODULES = [
       'Negative & winning keyword builders with CSV export',
       'Product ad readiness scoring (0–100)',
       'Weekly report & executive Boss Report generator',
+    ],
+  },
+  {
+    id:          'upc',
+    icon:        '🏷️',
+    name:        'UPC Scanner',
+    accent:      ORANGE,
+    tagline:     'Scan supplier catalogs for Amazon opportunities',
+    description: 'Upload a supplier CSV with UPC, Price, and Product Description to match ASINs via Keepa, calculate estimated profit and ROI, and classify every product as a Good Lead, Maybe, Pass, or No Match.',
+    features: [
+      'UPC → ASIN matching via Keepa API',
+      'Estimated profit, ROI %, and margin per product',
+      'Good / Maybe / Pass / No Match decision logic',
+      'Buy Box, FBA fee, BSR, and seller count data',
+      'Filterable results table + CSV export',
     ],
   },
 ];
@@ -115,9 +131,10 @@ export default function CommandCenterLanding({ onSelectModule }) {
 function ModuleCard({ module: mod, onOpen }) {
   const [hovered, setHovered] = React.useState(false);
 
-  const isGreen = mod.accent === GREEN;
   // rgba components for glow without needing color-parse
-  const glowRgba = isGreen ? '34,197,94' : '6,182,212';
+  const glowRgba = mod.accent === GREEN ? '34,197,94'
+    : mod.accent === ORANGE ? '245,158,11'
+    : '6,182,212';
 
   return (
     <div
