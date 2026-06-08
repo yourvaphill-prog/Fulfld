@@ -2,14 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Download, X, RotateCcw } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
 import { T } from '../theme.js';
+import { buildWinners } from '../utils/winnerClassifier.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ppc_winners_excluded';
-
-// Orders threshold separating "proven" (high confidence) from "early" (low confidence) winners.
-// minOrders (from Settings) is the gate to appear in the list at all.
-// PROVEN_ORDER_COUNT is the internal gate to earn "High Priority Winner" status.
-const PROVEN_ORDER_COUNT = 3;
 
 const TIER_CONFIG = {
   // Tier 1 — Proven Winner: 3+ orders, good ACoS, strong ROAS
@@ -88,96 +84,7 @@ function saveExcluded(set) {
   } catch { /* quota / private mode */ }
 }
 
-// ── Candidate generation ───────────────────────────────────────────────────────
-/**
- * Five-tier classification (first match wins):
- *
- *   Tier 1 — High Priority Winner  : orders >= PROVEN_ORDER_COUNT(3) AND acos <= targetACoS AND roas >= goodROASThreshold
- *   Tier 2 — Early Winner          : orders >= minOrders AND orders < PROVEN_ORDER_COUNT AND acos <= targetACoS AND roas >= goodROASThreshold
- *   Tier 3 — Move to Exact Match   : orders >= minOrders AND acos <= targetACoS  (good ACoS but ROAS below strong threshold)
- *   Tier 4 — Increase Bid          : orders > 0 AND acos > targetACoS AND acos <= targetACoS × 1.5 AND roas >= 1
- *   Tier 5 — Keep Monitoring       : orders > 0 AND acos > targetACoS × 1.5
- *
- * minOrders (Settings) gates entry to the list entirely.
- * PROVEN_ORDER_COUNT gates Tier 1 vs Tier 2 — 1–2 orders earn "Early Winner",
- *   3+ orders earn "High Priority Winner".
- * Terms with orders === 0 are never included.
- * acos === 'NO_SALES' sentinel is skipped.
- * Deduplication by (term + campaign) fingerprint.
- */
-export function buildWinners(searchTerms, thresholds) {
-  const t    = thresholds;
-  const seen = new Set();
-  const out  = [];
-
-  for (const row of searchTerms) {
-    const term = (row.searchTerm ?? row.targeting ?? '').trim();
-    if (!term) continue;
-
-    // Must meet the minimum orders gate (from Settings — default 1)
-    if ((row.orders ?? 0) < t.minOrders) continue;
-
-    // Skip rows with no spend signal
-    if ((row.spend ?? 0) === 0 && (row.clicks ?? 0) === 0) continue;
-
-    // Skip the NO_SALES sentinel (spend > 0, sales = 0 — can't compute real ACoS)
-    if (row.acos === 'NO_SALES') continue;
-
-    const acos   = typeof row.acos === 'number' ? row.acos : null;
-    const roas   = typeof row.roas === 'number' ? row.roas : null;
-    const orders = row.orders ?? 0;
-
-    const fp = `${term.toLowerCase()}::${(row.campaignName ?? '').toLowerCase()}`;
-    if (seen.has(fp)) continue;
-    seen.add(fp);
-
-    let tier;
-
-    if (
-      orders >= PROVEN_ORDER_COUNT &&
-      acos !== null && acos <= t.targetACoS &&
-      roas !== null && roas >= t.goodROASThreshold
-    ) {
-      // Proven winner: 3+ orders, good ACoS, strong ROAS
-      tier = 1;
-    } else if (
-      orders >= t.minOrders && orders < PROVEN_ORDER_COUNT &&
-      acos !== null && acos <= t.targetACoS &&
-      roas !== null && roas >= t.goodROASThreshold
-    ) {
-      // Early winner: 1–2 orders, good ACoS, strong ROAS — promising but limited data
-      tier = 2;
-    } else if (acos !== null && acos <= t.targetACoS && orders >= t.minOrders) {
-      // Good ACoS but ROAS below strong threshold — isolate in Exact Match to gather data
-      tier = 3;
-    } else if (
-      acos !== null && acos > t.targetACoS &&
-      acos <= t.targetACoS * 1.5 &&
-      roas !== null && roas >= 1
-    ) {
-      // Slightly above ACoS target but still ROAS-positive
-      tier = 4;
-    } else if (acos !== null && acos > t.targetACoS * 1.5 && orders > 0) {
-      // Converting but well above ACoS target — keep monitoring
-      tier = 5;
-    } else {
-      continue; // can't classify
-    }
-
-    out.push({ ...row, fingerprint: fp, tier });
-  }
-
-  // Sort: Tier 1/2 → ROAS desc (best proven first, then best early)
-  //       Tier 3 → orders desc, Tier 4/5 → acos asc
-  out.sort((a, b) => {
-    if (a.tier !== b.tier) return a.tier - b.tier;
-    if (a.tier === 1 || a.tier === 2) return (b.roas ?? 0) - (a.roas ?? 0);
-    if (a.tier === 3) return (b.orders ?? 0) - (a.orders ?? 0);
-    return (a.acos ?? 0) - (b.acos ?? 0);
-  });
-
-  return out;
-}
+// buildWinners is imported from ../utils/winnerClassifier.js — shared with the API layer.
 
 // ── CSV export ─────────────────────────────────────────────────────────────────
 function exportCSV(rows) {

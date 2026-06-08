@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, X, RotateCcw } from 'lucide-react';
 import { fmtCurrency, fmtNum } from '../utils/metricCalculator.js';
 import { T } from '../theme.js';
+import { buildNegativeCandidates } from '../utils/negativeEngine.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const NEG_TYPES = ['Negative Exact', 'Negative Phrase', 'Review First'];
@@ -28,64 +29,9 @@ function saveExcluded(set) {
   } catch { /* quota / private mode */ }
 }
 
-// ── Candidate generation ───────────────────────────────────────────────────────
-/**
- * Three-tier classification:
- *   Tier 1 — Negative Exact  : spend >= maxNoOrderSpend  AND  orders === 0
- *   Tier 2 — Negative Phrase : clicks >= minClicks       AND  orders === 0  (below spend threshold)
- *   Tier 3 — Review First    : cpc >= highCPCThreshold   AND  orders === 0  (clicks but low spend)
- *
- * Terms with orders > 0 or sales > 0 are never included.
- * Deduplication by (term + campaign) fingerprint.
- */
-function buildCandidates(searchTerms, thresholds) {
-  const t    = thresholds;
-  const seen = new Set();
-  const out  = [];
-
-  for (const row of searchTerms) {
-    const term = (row.searchTerm ?? row.targeting ?? '').trim();
-    if (!term) continue;
-
-    // Never suggest negating a converting term
-    if ((row.orders ?? 0) > 0 || (row.sales ?? 0) > 0) continue;
-    // No data worth classifying
-    if ((row.spend ?? 0) === 0 && (row.clicks ?? 0) === 0) continue;
-
-    const fp = `${term.toLowerCase()}::${(row.campaignName ?? '').toLowerCase()}`;
-    if (seen.has(fp)) continue;
-    seen.add(fp);
-
-    let negType, reason;
-
-    if ((row.spend ?? 0) >= t.maxNoOrderSpend) {
-      // Tier 1 — highest confidence
-      negType = 'Negative Exact';
-      reason  = `$${(row.spend ?? 0).toFixed(2)} spent with zero orders — definitive wasted spend`;
-    } else if ((row.clicks ?? 0) >= t.minClicks) {
-      // Tier 2 — has enough data to judge conversion
-      negType = 'Negative Phrase';
-      reason  = `${row.clicks} clicks with zero orders — low conversion, check phrase intent`;
-    } else if ((row.cpc ?? 0) >= t.highCPCThreshold && (row.clicks ?? 0) > 0) {
-      // Tier 3 — expensive but low traffic; watch first
-      negType = 'Review First';
-      reason  = `High CPC ($${(row.cpc ?? 0).toFixed(2)}) with zero orders — monitor before negating`;
-    } else {
-      continue; // not enough signal
-    }
-
-    out.push({ ...row, fingerprint: fp, negType, reason });
-  }
-
-  // Sort: Exact first (spend desc), then Phrase (clicks desc), then Review First
-  const TIER = { 'Negative Exact': 0, 'Negative Phrase': 1, 'Review First': 2 };
-  out.sort((a, b) => {
-    const td = (TIER[a.negType] ?? 9) - (TIER[b.negType] ?? 9);
-    return td !== 0 ? td : (b.spend ?? 0) - (a.spend ?? 0);
-  });
-
-  return out;
-}
+// buildNegativeCandidates is imported from ../utils/negativeEngine.js — shared with the API layer.
+// Local alias keeps the rest of the component unchanged.
+const buildCandidates = buildNegativeCandidates;
 
 // ── CSV export ─────────────────────────────────────────────────────────────────
 function exportCSV(included, typeOverrides) {

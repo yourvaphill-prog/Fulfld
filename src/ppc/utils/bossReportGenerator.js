@@ -10,7 +10,7 @@
 
 import { buildScalingPlan, summarisePlan } from './scalingEngine.js';
 import { buildReadinessPlan, summariseReadiness } from './adReadinessScore.js';
-import { buildWinners } from '../components/WinningKeywordBuilder.jsx';
+import { buildWinners } from './winnerClassifier.js';
 
 // ── Inline formatters (plain strings, no JSX) ──────────────────────────────────
 function usd(v)  { return typeof v === 'number' ? '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
