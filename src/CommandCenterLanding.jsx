@@ -4,6 +4,8 @@ import React from 'react';
 const CYAN   = '#06b6d4';
 const GREEN  = '#22c55e';
 const ORANGE = '#f59e0b';
+const PURPLE = '#a78bfa';
+const ROSE   = '#fb7185';
 const BORDER = 'rgba(255,255,255,0.072)';
 
 // ── Module definitions ─────────────────────────────────────────────────────────
@@ -51,6 +53,36 @@ const MODULES = [
       'Good / Maybe / Pass / No Match decision logic',
       'Buy Box, FBA fee, BSR, and seller count data',
       'Filterable results table + CSV export',
+    ],
+  },
+  {
+    id:          'catalog',
+    icon:        '🌐',
+    name:        'Website Catalog Scraper',
+    accent:      PURPLE,
+    tagline:     'Extract product catalogs from brand websites',
+    description: 'Enter any brand website URL to automatically extract product data from Shopify, WooCommerce, or generic HTML. Export a scanner-ready CSV compatible with UPC Scanner.',
+    features: [
+      'Shopify JSON — full product + variant extraction',
+      'WooCommerce / WordPress REST API support',
+      'Sitemap discovery + per-page HTML scraping',
+      'JSON-LD schema.org and Open Graph extraction',
+      'Export UPC Scanner-compatible CSV with 13 columns',
+    ],
+  },
+  {
+    id:          'decision',
+    icon:        '🎯',
+    name:        'Decision Maker Finder',
+    accent:      ROSE,
+    tagline:     'Find the right contact at any brand',
+    description: 'Enter a brand name and website URL to scan public contact, about, wholesale, and sales pages. Returns emails, phones, social links, ranked decision maker targets, and a suggested caller strategy.',
+    features: [
+      'Scans contact, about, wholesale, and sales pages',
+      'Extracts public emails, phones, and social links',
+      'Ranks decision maker titles by outreach priority',
+      'Generates LinkedIn and Google search links',
+      'Builds a suggested caller action and call script',
     ],
   },
 ];
@@ -132,8 +164,10 @@ function ModuleCard({ module: mod, onOpen }) {
   const [hovered, setHovered] = React.useState(false);
 
   // rgba components for glow without needing color-parse
-  const glowRgba = mod.accent === GREEN ? '34,197,94'
+  const glowRgba = mod.accent === GREEN  ? '34,197,94'
     : mod.accent === ORANGE ? '245,158,11'
+    : mod.accent === PURPLE ? '167,139,250'
+    : mod.accent === ROSE   ? '251,113,133'
     : '6,182,212';
 
   return (
