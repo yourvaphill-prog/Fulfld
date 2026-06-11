@@ -5,7 +5,7 @@ import { COLORS, ACCENTS, ACCENT_RGB, FONT, MONO, TRANSITION } from './theme/tok
 const MODULES = [
   {
     id:         'dashboard',
-    icon:       '🔍',
+    icon:       'BS',
     name:       'Brand Scout',
     accent:     ACCENTS.brandScout,
     rgb:        ACCENT_RGB.brandScout,
@@ -13,7 +13,7 @@ const MODULES = [
   },
   {
     id:         'ppc',
-    icon:       '⚡',
+    icon:       'PPC',
     name:       'PPC Pilot',
     accent:     ACCENTS.ppcPilot,
     rgb:        ACCENT_RGB.ppcPilot,
@@ -21,7 +21,7 @@ const MODULES = [
   },
   {
     id:         'upc',
-    icon:       '🏷️',
+    icon:       'UPC',
     name:       'UPC Scanner',
     accent:     ACCENTS.upcScanner,
     rgb:        ACCENT_RGB.upcScanner,
@@ -29,7 +29,7 @@ const MODULES = [
   },
   {
     id:         'catalog',
-    icon:       '🌐',
+    icon:       'CAT',
     name:       'Website Catalog Scraper',
     accent:     ACCENTS.catalog,
     rgb:        ACCENT_RGB.catalog,
@@ -205,7 +205,8 @@ function ToolRow({ tool, isLast, onOpen }) {
         background: `rgba(${tool.rgb},0.09)`,
         border: `1px solid rgba(${tool.rgb},${active ? '0.30' : '0.18'})`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 13, flexShrink: 0,
+        fontSize: 9, fontWeight: 700, fontFamily: MONO, color: tool.accent,
+        letterSpacing: '0.02em', flexShrink: 0,
         transition: 'border-color 140ms ease',
       }}>
         {tool.icon}
@@ -295,10 +296,11 @@ function ExternalRow({ href }) {
         background: `rgba(${rgb},0.09)`,
         border: `1px solid rgba(${rgb},${active ? '0.30' : '0.18'})`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 13, flexShrink: 0,
+        fontSize: 9, fontWeight: 700, fontFamily: MONO, color: accent,
+        letterSpacing: '0.02em', flexShrink: 0,
         transition: 'border-color 140ms ease',
       }}>
-        🧠
+        CI
       </div>
 
       {/* Name + capability */}
