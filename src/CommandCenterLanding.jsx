@@ -1,498 +1,316 @@
 import React from 'react';
+import { COLORS, ACCENTS, ACCENT_RGB, FONT, TRANSITION } from './theme/tokens.js';
 
-// ── Design tokens (self-contained — no dep on theme.js) ───────────────────────
-const CYAN   = '#06b6d4';
-const GREEN  = '#22c55e';
-const ORANGE = '#f59e0b';
-const PURPLE = '#a78bfa';
-const ROSE   = '#fb7185';
-const BORDER = 'rgba(255,255,255,0.072)';
-
-// ── Module definitions ─────────────────────────────────────────────────────────
+// ── Module definitions (internal workflows) ────────────────────────────────────
 const MODULES = [
   {
-    id:          'dashboard',
-    icon:        '🔍',
-    name:        'Brand Scout',
-    accent:      GREEN,
-    tagline:     'Evaluate brands with Fulfld intelligence',
-    description: 'Upload Fulfld CSV exports to score brands, map subcategory markets, track team decisions, and build your qualified brand pipeline.',
-    features: [
-      'Brand scoring & weighted KPI analysis',
-      'Subcategory market share mapping',
-      'Ad intelligence integration (AdSpy)',
-      'Team collaboration & shared pipeline statuses',
-      'CSV export & duplicate brand detection',
-    ],
+    id:       'dashboard',
+    icon:     '🔍',
+    name:     'Brand Scout',
+    accent:   ACCENTS.brandScout,
+    rgb:      ACCENT_RGB.brandScout,
+    tagline:  'Evaluate brands with Fulfld intelligence',
+    description: 'Score brands, map subcategory markets, and track team decisions from Fulfld CSV exports.',
   },
   {
-    id:          'ppc',
-    icon:        '⚡',
-    name:        'PPC Pilot',
-    accent:      CYAN,
-    tagline:     'Command your Amazon PPC campaigns',
-    description: 'Upload Amazon Ads CSV reports to analyze campaign health, eliminate wasted spend, build keyword lists, and generate client-ready executive reports.',
-    features: [
-      'Campaign health scoring & ROAS tracking',
-      'Search term analysis — winners & wasted spend',
-      'Negative & winning keyword builders with CSV export',
-      'Product ad readiness scoring (0–100)',
-      'Weekly report & executive Boss Report generator',
-    ],
+    id:       'ppc',
+    icon:     '⚡',
+    name:     'PPC Pilot',
+    accent:   ACCENTS.ppcPilot,
+    rgb:      ACCENT_RGB.ppcPilot,
+    tagline:  'Command your Amazon PPC campaigns',
+    description: 'Analyze campaign health, cut wasted spend, build keyword lists, and generate client-ready reports.',
   },
   {
-    id:          'upc',
-    icon:        '🏷️',
-    name:        'UPC Scanner',
-    accent:      ORANGE,
-    tagline:     'Scan supplier catalogs for Amazon opportunities',
-    description: 'Upload a supplier CSV with UPC, Price, and Product Description to match ASINs via Keepa, calculate estimated profit and ROI, and classify every product as a Good Lead, Maybe, Pass, or No Match.',
-    features: [
-      'UPC → ASIN matching via Keepa API',
-      'Estimated profit, ROI %, and margin per product',
-      'Good / Maybe / Pass / No Match decision logic',
-      'Buy Box, FBA fee, BSR, and seller count data',
-      'Filterable results table + CSV export',
-    ],
+    id:       'upc',
+    icon:     '🏷️',
+    name:     'UPC Scanner',
+    accent:   ACCENTS.upcScanner,
+    rgb:      ACCENT_RGB.upcScanner,
+    tagline:  'Scan supplier catalogs for opportunities',
+    description: 'Match UPCs to ASINs via Keepa, estimate profit and ROI, and classify every product as a lead.',
   },
   {
-    id:          'catalog',
-    icon:        '🌐',
-    name:        'Website Catalog Scraper',
-    accent:      PURPLE,
-    tagline:     'Extract product catalogs from brand websites',
-    description: 'Enter any brand website URL to automatically extract product data from Shopify, WooCommerce, or generic HTML. Export a scanner-ready CSV compatible with UPC Scanner.',
-    features: [
-      'Shopify JSON — full product + variant extraction',
-      'WooCommerce / WordPress REST API support',
-      'Sitemap discovery + per-page HTML scraping',
-      'JSON-LD schema.org and Open Graph extraction',
-      'Export UPC Scanner-compatible CSV with 13 columns',
-    ],
+    id:       'catalog',
+    icon:     '🌐',
+    name:     'Website Catalog Scraper',
+    accent:   ACCENTS.catalog,
+    rgb:      ACCENT_RGB.catalog,
+    tagline:  'Extract product catalogs from brand sites',
+    description: 'Pull product data from Shopify, WooCommerce, or generic HTML into a scanner-ready CSV.',
   },
 ];
 
-// ── Landing screen ─────────────────────────────────────────────────────────────
+// Contact Intelligence — external GPT agent (NOT an internal module).
+const CONTACT_GPT_URL =
+  'https://chatgpt.com/g/g-6a297117a7908191bf496698addb9419-fufld-decision-maker-finder';
+
+// ── Landing screen ──────────────────────────────────────────────────────────────
 export default function CommandCenterLanding({ onSelectModule }) {
   return (
     <div style={{
       flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 24px 56px',
       overflowY: 'auto',
+      display: 'flex',
+      justifyContent: 'center',
+      // Top-aligned — content starts from the top, never vertically centered.
+      alignItems: 'flex-start',
+      padding: '48px 24px 64px',
     }}>
+      <div style={{ width: '100%', maxWidth: 1000 }}>
 
-      {/* ── Hero ── */}
-      <div style={{ textAlign: 'center', marginBottom: 52 }}>
+        {/* ── Intro (left-aligned) ── */}
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{
+            color: COLORS.text,
+            fontSize: 24,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            margin: '0 0 6px',
+            fontFamily: FONT,
+          }}>
+            Choose a workflow
+          </h1>
+          <p style={{
+            color: COLORS.textMuted,
+            fontSize: 13,
+            lineHeight: 1.6,
+            margin: 0,
+            fontFamily: FONT,
+          }}>
+            FUFLD / AWL internal operations console — select a module to begin your session.
+          </p>
+        </div>
 
-        <h1 style={{
-          color: '#e2e8f0',
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: '0.05em',
-          margin: '0 0 12px',
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          textTransform: 'uppercase',
+        {/* ── Workflows section ── */}
+        <SectionLabel>Workflows</SectionLabel>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 14,
+          marginBottom: 36,
         }}>
-          <span style={{ color: CYAN }}>Command Center</span>
-        </h1>
+          {MODULES.map(mod => (
+            <ModuleCard key={mod.id} module={mod} onOpen={() => onSelectModule(mod.id)} />
+          ))}
+        </div>
 
-        <p style={{
-          color: '#475569',
-          fontSize: 13,
-          margin: 0,
+        {/* ── External tools section ── */}
+        <SectionLabel>External Tools</SectionLabel>
+        <ContactIntelligenceCard href={CONTACT_GPT_URL} />
+
+        {/* ── Footer ── */}
+        <div style={{
+          marginTop: 40,
+          paddingTop: 18,
+          borderTop: `1px solid ${COLORS.border}`,
+          color: COLORS.textDim,
+          fontSize: 11,
           letterSpacing: '0.04em',
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily: FONT,
         }}>
-          Select a module to begin your session
-        </p>
-      </div>
-
-      {/* ── Module cards ── */}
-      <div style={{
-        display: 'flex',
-        gap: 24,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        maxWidth: 880,
-        width: '100%',
-      }}>
-        {MODULES.map(mod => (
-          <ModuleCard
-            key={mod.id}
-            module={mod}
-            onOpen={() => onSelectModule(mod.id)}
-          />
-        ))}
-      </div>
-
-      {/* ── External tools section ── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        marginTop: 40,
-        marginBottom: 24,
-        maxWidth: 880,
-        width: '100%',
-      }}>
-        <div style={{ flex: 1, height: 1, background: BORDER }} />
-        <span style={{
-          color: '#1e293b',
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
-          External Tools
-        </span>
-        <div style={{ flex: 1, height: 1, background: BORDER }} />
-      </div>
-
-      <div style={{
-        display: 'flex',
-        gap: 24,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        maxWidth: 880,
-        width: '100%',
-      }}>
-        <ExternalLinkCard
-          icon="🧠"
-          name="Contact Intelligence"
-          accent={ROSE}
-          tagline="Find the right contact at any brand"
-          description="Use the GPT agent to find USA-first phone routes, possible brand decision makers, contact sources, LinkedIn search angles, and AWL/FUFLD caller scripts."
-          features={[
-            'USA-first phone route discovery',
-            'Possible brand decision maker identification',
-            'Contact source research & LinkedIn search angles',
-            'AWL / Distribution caller scripts',
-            'FUFLD / Amazon Growth caller scripts',
-          ]}
-          buttonLabel="Open Contact Intelligence"
-          href="https://chatgpt.com/g/g-6a297117a7908191bf496698addb9419-fufld-decision-maker-finder"
-          externalNote="Opens in ChatGPT"
-        />
-      </div>
-
-      {/* ── Footer tagline ── */}
-      <div style={{
-        marginTop: 48,
-        color: '#1e293b',
-        fontSize: 11,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}>
-        FUFLD · Fulfld Brand Intelligence Platform
+          FUFLD · Fulfld Brand Intelligence Platform
+        </div>
       </div>
     </div>
   );
 }
 
-// ── External link card (opens in new tab — no internal navigation) ────────────
-function ExternalLinkCard({ icon, name, accent, tagline, description, features, buttonLabel, href, externalNote }) {
-  const [hovered, setHovered] = React.useState(false);
-  const glowRgba = accent === ROSE ? '251,113,133' : '6,182,212';
-
+// ── Section label (eyebrow) ─────────────────────────────────────────────────────
+function SectionLabel({ children }) {
   return (
-    <div
-      style={{
-        flex: '1 1 340px',
-        maxWidth: 408,
-        position: 'relative',
-        overflow: 'hidden',
-        background: hovered ? `rgba(${glowRgba},0.055)` : 'rgba(255,255,255,0.030)',
-        border: `1px solid ${hovered ? accent + '50' : BORDER}`,
-        borderRadius: 16,
-        padding: '28px 28px 26px',
-        boxShadow: hovered
-          ? `0 10px 48px rgba(0,0,0,0.60), 0 0 36px rgba(${glowRgba},0.12)`
-          : '0 4px 28px rgba(0,0,0,0.45)',
-        transition: 'all 0.25s ease',
-        cursor: 'default',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* Top accent bar */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-        background: `linear-gradient(90deg, ${accent}, ${accent}00)`,
-      }} />
-
-      {/* Corner glow */}
-      <div style={{
-        position: 'absolute', top: -40, right: -40,
-        width: 160, height: 160, borderRadius: '50%',
-        background: `radial-gradient(circle, rgba(${glowRgba},0.06) 0%, transparent 70%)`,
-        pointerEvents: 'none',
-      }} />
-
-      {/* Icon + name row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: 12,
-          background: `rgba(${glowRgba},0.10)`,
-          border: `1px solid rgba(${glowRgba},0.22)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, flexShrink: 0,
-        }}>
-          {icon}
-        </div>
-        <div>
-          <div style={{
-            color: '#e2e8f0', fontSize: 18, fontWeight: 700,
-            letterSpacing: '0.02em',
-            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            {name}
-            {/* External badge */}
-            <span style={{
-              fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
-              color: '#475569', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase',
-              verticalAlign: 'middle',
-            }}>
-              GPT
-            </span>
-          </div>
-          <div style={{
-            color: accent, fontSize: 11, fontWeight: 600,
-            letterSpacing: '0.05em', marginTop: 2,
-            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
-            {tagline}
-          </div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ height: 1, background: BORDER, marginBottom: 16 }} />
-
-      {/* Description */}
-      <p style={{
-        color: '#64748b', fontSize: 12, lineHeight: 1.75,
-        margin: '0 0 18px',
-        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}>
-        {description}
-      </p>
-
-      {/* Feature list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 26, flex: 1 }}>
-        {features.map((feat, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-            <span style={{ color: accent, fontSize: 11, lineHeight: '18px', flexShrink: 0, fontWeight: 700 }}>✓</span>
-            <span style={{
-              color: '#94a3b8', fontSize: 12, lineHeight: '18px',
-              fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {feat}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Open button — anchor tag, new tab */}
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          display: 'block',
-          width: '100%',
-          background: hovered ? accent : `rgba(${glowRgba},0.12)`,
-          border: `1px solid rgba(${glowRgba},0.36)`,
-          borderRadius: 8,
-          padding: '11px 20px',
-          color: hovered ? '#05080f' : accent,
-          fontSize: 12,
-          fontWeight: 700,
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          cursor: 'pointer',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          textDecoration: 'none',
-          textAlign: 'center',
-          transition: 'all 0.2s ease',
-          boxSizing: 'border-box',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = accent;
-          e.currentTarget.style.color = '#05080f';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = `rgba(${glowRgba},0.12)`;
-          e.currentTarget.style.color = accent;
-        }}
-      >
-        {buttonLabel} ↗
-      </a>
-
-      {/* External note */}
-      {externalNote && (
-        <div style={{
-          marginTop: 10, textAlign: 'center',
-          color: '#334155', fontSize: 10,
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
-          ↗ {externalNote}
-        </div>
-      )}
+    <div style={{
+      color: COLORS.textDim,
+      fontSize: 10,
+      fontWeight: 600,
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase',
+      marginBottom: 12,
+      fontFamily: FONT,
+    }}>
+      {children}
     </div>
   );
 }
 
-// ── Module card ────────────────────────────────────────────────────────────────
+// ── Internal module card — compact, flat, fully clickable ──────────────────────
 function ModuleCard({ module: mod, onOpen }) {
   const [hovered, setHovered] = React.useState(false);
 
-  // rgba components for glow without needing color-parse
-  const glowRgba = mod.accent === GREEN  ? '34,197,94'
-    : mod.accent === ORANGE ? '245,158,11'
-    : mod.accent === PURPLE ? '167,139,250'
-    : mod.accent === ROSE   ? '251,113,133'
-    : '6,182,212';
-
   return (
     <div
-      style={{
-        flex: '1 1 340px',
-        maxWidth: 408,
-        position: 'relative',
-        overflow: 'hidden',
-        background: hovered
-          ? `rgba(${glowRgba},0.055)`
-          : 'rgba(255,255,255,0.030)',
-        border: `1px solid ${hovered ? mod.accent + '50' : BORDER}`,
-        borderRadius: 16,
-        padding: '28px 28px 26px',
-        boxShadow: hovered
-          ? `0 10px 48px rgba(0,0,0,0.60), 0 0 36px rgba(${glowRgba},0.12)`
-          : '0 4px 28px rgba(0,0,0,0.45)',
-        transition: 'all 0.25s ease',
-        cursor: 'default',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        background: hovered ? COLORS.surfaceHover : COLORS.surface,
+        border: `1px solid ${hovered ? COLORS.borderStrong : COLORS.border}`,
+        borderRadius: 10,
+        padding: '16px 18px',
+        cursor: 'pointer',
+        transition: TRANSITION,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        outline: 'none',
+      }}
     >
-      {/* Top accent bar */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0, right: 0,
-        height: 2,
-        background: `linear-gradient(90deg, ${mod.accent}, ${mod.accent}00)`,
-      }} />
-
-      {/* Subtle ambient glow in corner */}
-      <div style={{
-        position: 'absolute',
-        top: -40, right: -40,
-        width: 160, height: 160,
-        borderRadius: '50%',
-        background: `radial-gradient(circle, rgba(${glowRgba},0.06) 0%, transparent 70%)`,
-        pointerEvents: 'none',
-      }} />
-
       {/* Icon + name row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{
-          width: 46, height: 46, borderRadius: 12,
-          background: `rgba(${glowRgba},0.10)`,
-          border: `1px solid rgba(${glowRgba},0.22)`,
+          width: 34, height: 34, borderRadius: 8,
+          background: `rgba(${mod.rgb},0.10)`,
+          border: `1px solid rgba(${mod.rgb},0.25)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, flexShrink: 0,
+          fontSize: 17, flexShrink: 0,
         }}>
           {mod.icon}
         </div>
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div style={{
-            color: '#e2e8f0', fontSize: 18, fontWeight: 700,
-            letterSpacing: '0.02em', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: COLORS.text, fontSize: 14, fontWeight: 600,
+            letterSpacing: '-0.01em', fontFamily: FONT,
           }}>
             {mod.name}
           </div>
           <div style={{
-            color: mod.accent, fontSize: 11, fontWeight: 600,
-            letterSpacing: '0.05em', marginTop: 2,
-            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: COLORS.textDim, fontSize: 11, marginTop: 1,
+            fontFamily: FONT,
           }}>
             {mod.tagline}
           </div>
         </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: BORDER, marginBottom: 16 }} />
-
       {/* Description */}
       <p style={{
-        color: '#64748b', fontSize: 12, lineHeight: 1.75,
-        margin: '0 0 18px',
-        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: COLORS.textMuted, fontSize: 12, lineHeight: 1.55,
+        margin: 0, fontFamily: FONT,
       }}>
         {mod.description}
       </p>
 
-      {/* Feature list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 26, flex: 1 }}>
-        {mod.features.map((feat, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-            <span style={{
-              color: mod.accent, fontSize: 11,
-              lineHeight: '18px', flexShrink: 0, fontWeight: 700,
-            }}>✓</span>
-            <span style={{
-              color: '#94a3b8', fontSize: 12,
-              lineHeight: '18px', fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {feat}
-            </span>
-          </div>
-        ))}
+      {/* Open affordance — accent only on hover */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+        color: hovered ? mod.accent : COLORS.textDim,
+        fontSize: 11, fontWeight: 600, letterSpacing: '0.02em',
+        fontFamily: FONT, transition: TRANSITION,
+      }}>
+        Open&nbsp;→
+      </div>
+    </div>
+  );
+}
+
+// ── Contact Intelligence — full-width horizontal external card ─────────────────
+function ContactIntelligenceCard({ href }) {
+  const [hovered, setHovered] = React.useState(false);
+  const accent = ACCENTS.contact;
+  const rgb    = ACCENT_RGB.contact;
+
+  const capabilities = [
+    'USA-first phone routes',
+    'Possible decision makers',
+    'Contact sources',
+    'LinkedIn search angles',
+    'AWL / FUFLD caller scripts',
+  ];
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? COLORS.surfaceHover : COLORS.surface,
+        border: `1px solid ${hovered ? COLORS.borderStrong : COLORS.border}`,
+        borderRadius: 10,
+        padding: '16px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+        transition: TRANSITION,
+      }}
+    >
+      {/* Icon */}
+      <div style={{
+        width: 38, height: 38, borderRadius: 8,
+        background: `rgba(${rgb},0.10)`,
+        border: `1px solid rgba(${rgb},0.25)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 18, flexShrink: 0,
+      }}>
+        🧠
       </div>
 
-      {/* Open button */}
-      <button
-        onClick={onOpen}
-        style={{
-          width: '100%',
-          background: hovered ? mod.accent : `rgba(${glowRgba},0.12)`,
-          border: `1px solid rgba(${glowRgba},0.36)`,
-          borderRadius: 8,
-          padding: '11px 20px',
-          color: hovered ? '#05080f' : mod.accent,
-          fontSize: 12,
-          fontWeight: 700,
-          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          cursor: 'pointer',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = mod.accent;
-          e.currentTarget.style.color = '#05080f';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = `rgba(${glowRgba},0.12)`;
-          e.currentTarget.style.color = mod.accent;
-        }}
-      >
-        Open {mod.name} →
-      </button>
+      {/* Text block */}
+      <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+          <span style={{
+            color: COLORS.text, fontSize: 14, fontWeight: 600,
+            letterSpacing: '-0.01em', fontFamily: FONT,
+          }}>
+            Contact Intelligence
+          </span>
+          <Badge>GPT</Badge>
+          <Badge>External</Badge>
+        </div>
+        <div style={{
+          color: COLORS.textMuted, fontSize: 12, lineHeight: 1.55,
+          fontFamily: FONT,
+        }}>
+          Decision-maker & contact research for any brand —{' '}
+          {capabilities.join(' · ')}.
+        </div>
+      </div>
+
+      {/* Action — opens GPT agent in a new tab */}
+      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: hovered ? `rgba(${rgb},0.14)` : `rgba(${rgb},0.08)`,
+            border: `1px solid rgba(${rgb},${hovered ? '0.45' : '0.30'})`,
+            borderRadius: 8,
+            padding: '8px 16px',
+            color: accent,
+            fontSize: 12, fontWeight: 600,
+            fontFamily: FONT,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            transition: TRANSITION,
+          }}
+        >
+          Open in ChatGPT ↗
+        </a>
+        <span style={{ color: COLORS.textDim, fontSize: 10, fontFamily: FONT }}>
+          ↗ Opens in ChatGPT
+        </span>
+      </div>
     </div>
+  );
+}
+
+// ── Small badge ─────────────────────────────────────────────────────────────────
+function Badge({ children }) {
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
+      color: COLORS.textDim,
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: 4, padding: '1px 6px',
+      textTransform: 'uppercase',
+      fontFamily: FONT,
+    }}>
+      {children}
+    </span>
   );
 }

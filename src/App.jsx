@@ -4,8 +4,8 @@ import UPCScanner from './upc/UPCScanner.jsx';
 import CatalogScraper from './catalog/CatalogScraper.jsx';
 import DecisionMakerFinder from './decision/DecisionMakerFinder.jsx';
 import CommandCenterLanding from './CommandCenterLanding.jsx';
-import ppcBg    from './assets/ppc-bg.jpg';
 import fufldLogo from './assets/fufld-logo.png';
+import { COLORS } from './theme/tokens.js';
 import Papa from 'papaparse';
 import { Upload, Settings, Download, Users, X, ChevronDown, LogOut, Zap } from 'lucide-react';
 
@@ -21,9 +21,9 @@ import ActivityFeed from './components/ActivityFeed.jsx';
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const G      = '#00ff87';
 const B      = '#3b82f6';
-const BG     = '#080c12';
+const BG     = COLORS.bg;          // near-black navy (Operations Console)
 const CARD   = 'rgba(13,20,35,0.85)';
-const BORDER = 'rgba(255,255,255,0.07)';
+const BORDER = COLORS.border;      // hairline border
 
 // ── Team members ──────────────────────────────────────────────────────────────
 const TEAM = ['Phillip', 'Johan', 'Cesar', 'Pat', 'King', 'Other'];
@@ -721,22 +721,14 @@ export default function App() {
     <div style={{
       height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
       fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      // Layered background: CSS grid lines → dark overlay → cyber grid image
-      backgroundImage: [
-        'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.020) 40px)',
-        'repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.020) 40px)',
-        'linear-gradient(rgba(5,8,15,0.87), rgba(5,8,15,0.87))',
-        `url(${ppcBg})`,
-      ].join(', '),
-      backgroundSize: 'auto, auto, auto, cover',
-      backgroundPosition: 'top left, top left, center, center',
-      backgroundRepeat: 'repeat, repeat, no-repeat, no-repeat',
+      // Clean flat near-black navy — Operations Console (no cyber grid / image)
+      background: COLORS.bg,
     }}>
 
       {/* ── Header ── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(8,12,18,0.88)', backdropFilter: 'blur(20px)',
+        background: COLORS.bg,
         borderBottom: `1px solid ${BORDER}`,
         display: 'flex', alignItems: 'center', padding: '0 24px', height: 54,
         gap: 24,
@@ -826,10 +818,10 @@ export default function App() {
               {showModuleSwitcher && (
                 <div style={{
                   position: 'absolute', top: '110%', right: 0,
-                  background: 'rgba(8,12,22,0.97)',
+                  background: COLORS.surface,
                   border: `1px solid ${BORDER}`,
                   borderRadius: 8, overflow: 'hidden', minWidth: 180,
-                  backdropFilter: 'blur(16px)', zIndex: 300,
+                  zIndex: 300,
                   boxShadow: '0 12px 32px rgba(0,0,0,0.65)',
                 }}>
                   <div style={{
@@ -889,15 +881,16 @@ export default function App() {
             <button
               onClick={() => setShowUserMenu(s => !s)}
               style={{
-                background: 'rgba(0,255,135,0.08)', border: `1px solid ${G}30`,
-                borderRadius: 7, padding: '5px 12px', color: G,
+                background: COLORS.surface, border: `1px solid ${BORDER}`,
+                borderRadius: 7, padding: '5px 12px', color: COLORS.textMuted,
                 fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
+              {/* Calm live indicator — solid dot, no glow */}
               <span style={{
                 width: 7, height: 7, borderRadius: '50%',
-                background: G, boxShadow: `0 0 6px ${G}`,
+                background: G,
                 flexShrink: 0,
               }} />
               {userName}
@@ -906,9 +899,10 @@ export default function App() {
             {showUserMenu && (
               <div style={{
                 position: 'absolute', top: '110%', right: 0,
-                background: 'rgba(13,20,35,0.97)', border: `1px solid ${BORDER}`,
+                background: COLORS.surface, border: `1px solid ${BORDER}`,
                 borderRadius: 8, overflow: 'hidden', minWidth: 160,
-                backdropFilter: 'blur(12px)', zIndex: 200,
+                zIndex: 200,
+                boxShadow: '0 12px 32px rgba(0,0,0,0.55)',
               }}>
                 {TEAM.map(name => (
                   <button key={name} onClick={() => { saveUser(name); setUserName(name); setShowUserMenu(false); }} style={{
@@ -938,9 +932,9 @@ export default function App() {
       {showUpload && (
         <div style={{
           position: 'fixed', top: 54, right: 24, zIndex: 300,
-          width: 380, background: 'rgba(13,20,35,0.97)',
+          width: 380, background: COLORS.surface,
           border: `1px solid ${BORDER}`, borderRadius: 12,
-          padding: 20, backdropFilter: 'blur(16px)',
+          padding: 20,
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
