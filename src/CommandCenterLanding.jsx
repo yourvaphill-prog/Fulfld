@@ -129,6 +129,58 @@ export default function CommandCenterLanding({ onSelectModule }) {
         ))}
       </div>
 
+      {/* ── External tools section ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        marginTop: 40,
+        marginBottom: 24,
+        maxWidth: 880,
+        width: '100%',
+      }}>
+        <div style={{ flex: 1, height: 1, background: BORDER }} />
+        <span style={{
+          color: '#1e293b',
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
+          External Tools
+        </span>
+        <div style={{ flex: 1, height: 1, background: BORDER }} />
+      </div>
+
+      <div style={{
+        display: 'flex',
+        gap: 24,
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        maxWidth: 880,
+        width: '100%',
+      }}>
+        <ExternalLinkCard
+          icon="🧠"
+          name="Contact Intelligence"
+          accent={ROSE}
+          tagline="Find the right contact at any brand"
+          description="Use the GPT agent to find USA-first phone routes, possible brand decision makers, contact sources, LinkedIn search angles, and AWL/FUFLD caller scripts."
+          features={[
+            'USA-first phone route discovery',
+            'Possible brand decision maker identification',
+            'Contact source research & LinkedIn search angles',
+            'AWL / Distribution caller scripts',
+            'FUFLD / Amazon Growth caller scripts',
+          ]}
+          buttonLabel="Open Contact Intelligence"
+          href="https://chatgpt.com/g/g-6a297117a7908191bf496698addb9419-fufld-decision-maker-finder"
+          externalNote="Opens in ChatGPT"
+        />
+      </div>
+
       {/* ── Footer tagline ── */}
       <div style={{
         marginTop: 48,
@@ -140,6 +192,163 @@ export default function CommandCenterLanding({ onSelectModule }) {
       }}>
         FUFLD · Fulfld Brand Intelligence Platform
       </div>
+    </div>
+  );
+}
+
+// ── External link card (opens in new tab — no internal navigation) ────────────
+function ExternalLinkCard({ icon, name, accent, tagline, description, features, buttonLabel, href, externalNote }) {
+  const [hovered, setHovered] = React.useState(false);
+  const glowRgba = accent === ROSE ? '251,113,133' : '6,182,212';
+
+  return (
+    <div
+      style={{
+        flex: '1 1 340px',
+        maxWidth: 408,
+        position: 'relative',
+        overflow: 'hidden',
+        background: hovered ? `rgba(${glowRgba},0.055)` : 'rgba(255,255,255,0.030)',
+        border: `1px solid ${hovered ? accent + '50' : BORDER}`,
+        borderRadius: 16,
+        padding: '28px 28px 26px',
+        boxShadow: hovered
+          ? `0 10px 48px rgba(0,0,0,0.60), 0 0 36px rgba(${glowRgba},0.12)`
+          : '0 4px 28px rgba(0,0,0,0.45)',
+        transition: 'all 0.25s ease',
+        cursor: 'default',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Top accent bar */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+        background: `linear-gradient(90deg, ${accent}, ${accent}00)`,
+      }} />
+
+      {/* Corner glow */}
+      <div style={{
+        position: 'absolute', top: -40, right: -40,
+        width: 160, height: 160, borderRadius: '50%',
+        background: `radial-gradient(circle, rgba(${glowRgba},0.06) 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Icon + name row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+        <div style={{
+          width: 46, height: 46, borderRadius: 12,
+          background: `rgba(${glowRgba},0.10)`,
+          border: `1px solid rgba(${glowRgba},0.22)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <div>
+          <div style={{
+            color: '#e2e8f0', fontSize: 18, fontWeight: 700,
+            letterSpacing: '0.02em',
+            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            {name}
+            {/* External badge */}
+            <span style={{
+              fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
+              color: '#475569', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase',
+              verticalAlign: 'middle',
+            }}>
+              GPT
+            </span>
+          </div>
+          <div style={{
+            color: accent, fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.05em', marginTop: 2,
+            fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>
+            {tagline}
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: BORDER, marginBottom: 16 }} />
+
+      {/* Description */}
+      <p style={{
+        color: '#64748b', fontSize: 12, lineHeight: 1.75,
+        margin: '0 0 18px',
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}>
+        {description}
+      </p>
+
+      {/* Feature list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 26, flex: 1 }}>
+        {features.map((feat, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+            <span style={{ color: accent, fontSize: 11, lineHeight: '18px', flexShrink: 0, fontWeight: 700 }}>✓</span>
+            <span style={{
+              color: '#94a3b8', fontSize: 12, lineHeight: '18px',
+              fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              {feat}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Open button — anchor tag, new tab */}
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: 'block',
+          width: '100%',
+          background: hovered ? accent : `rgba(${glowRgba},0.12)`,
+          border: `1px solid rgba(${glowRgba},0.36)`,
+          borderRadius: 8,
+          padding: '11px 20px',
+          color: hovered ? '#05080f' : accent,
+          fontSize: 12,
+          fontWeight: 700,
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          cursor: 'pointer',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          textDecoration: 'none',
+          textAlign: 'center',
+          transition: 'all 0.2s ease',
+          boxSizing: 'border-box',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = accent;
+          e.currentTarget.style.color = '#05080f';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = `rgba(${glowRgba},0.12)`;
+          e.currentTarget.style.color = accent;
+        }}
+      >
+        {buttonLabel} ↗
+      </a>
+
+      {/* External note */}
+      {externalNote && (
+        <div style={{
+          marginTop: 10, textAlign: 'center',
+          color: '#334155', fontSize: 10,
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
+          ↗ {externalNote}
+        </div>
+      )}
     </div>
   );
 }
