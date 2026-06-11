@@ -70,21 +70,6 @@ const MODULES = [
       'Export UPC Scanner-compatible CSV with 13 columns',
     ],
   },
-  {
-    id:          'decision',
-    icon:        '🎯',
-    name:        'Decision Maker Finder',
-    accent:      ROSE,
-    tagline:     'Find the right contact at any brand',
-    description: 'Enter a brand name and website URL to scan public contact, about, wholesale, and sales pages. Returns emails, phones, social links, ranked decision maker targets, and a suggested caller strategy.',
-    features: [
-      'Scans contact, about, wholesale, and sales pages',
-      'Extracts public emails, phones, and social links',
-      'Ranks decision maker titles by outreach priority',
-      'Generates LinkedIn and Google search links',
-      'Builds a suggested caller action and call script',
-    ],
-  },
 ];
 
 // ── Landing screen ─────────────────────────────────────────────────────────────

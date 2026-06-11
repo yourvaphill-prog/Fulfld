@@ -845,14 +845,12 @@ export default function App() {
                     { id: 'ppc',       label: '⚡ PPC Pilot',               accent: '#06b6d4' },
                     { id: 'upc',       label: '🏷️ UPC Scanner',             accent: '#f59e0b' },
                     { id: 'catalog',   label: '🌐 Website Catalog Scraper', accent: '#a78bfa' },
-                    { id: 'decision',  label: '🎯 Decision Maker Finder',   accent: '#fb7185' },
                   ].map(({ id, label, accent }) => {
                     const active =
-                      id === 'ppc'      ? page === 'ppc' :
-                      id === 'upc'      ? page === 'upc' :
-                      id === 'catalog'  ? page === 'catalog' :
-                      id === 'decision' ? page === 'decision' :
-                      id === 'home'     ? false :
+                      id === 'ppc'     ? page === 'ppc' :
+                      id === 'upc'     ? page === 'upc' :
+                      id === 'catalog' ? page === 'catalog' :
+                      id === 'home'    ? false :
                       page !== 'ppc' && page !== 'upc' && page !== 'catalog' && page !== 'decision' && page !== 'home';
                     return (
                       <button key={id}
