@@ -14,16 +14,16 @@
  * UPCs are NEVER invented — blank when not found.
  */
 
-import { getBaseUrl }              from './catalog/urlUtils.js';
-import { fetchShopify }            from './catalog/shopifyFetcher.js';
-import { fetchWooCommerce }        from './catalog/wooCommerceFetcher.js';
-import { discoverUrls }            from './catalog/sitemapDiscoverer.js';
+import { getBaseUrl }              from '../lib/catalog/urlUtils.js';
+import { fetchShopify }            from '../lib/catalog/shopifyFetcher.js';
+import { fetchWooCommerce }        from '../lib/catalog/wooCommerceFetcher.js';
+import { discoverUrls }            from '../lib/catalog/sitemapDiscoverer.js';
 import {
   scrapeProductPages,
   scrapeListingPages,
   scrapeGenericPage,
-}                                  from './catalog/htmlPageScraper.js';
-import { normalizeRow, COLUMNS }   from './catalog/productNormalizer.js';
+}                                  from '../lib/catalog/htmlPageScraper.js';
+import { normalizeRow, COLUMNS }   from '../lib/catalog/productNormalizer.js';
 
 // ── CORS helper ───────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [

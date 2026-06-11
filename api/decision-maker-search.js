@@ -12,10 +12,10 @@
  *   - No env vars are logged or returned
  */
 
-import { normalizeUrl, isUrlSafe }  from './catalog/urlUtils.js';
-import { scanWebsite }              from './decision/websiteScanner.js';
-import { extractContacts }          from './decision/contactExtractor.js';
-import { rankDecisionMakers }       from './decision/decisionMakerRanker.js';
+import { normalizeUrl, isUrlSafe }  from '../lib/catalog/urlUtils.js';
+import { scanWebsite }              from '../lib/decision/websiteScanner.js';
+import { extractContacts }          from '../lib/decision/contactExtractor.js';
+import { rankDecisionMakers }       from '../lib/decision/decisionMakerRanker.js';
 
 // ── CORS / origin allowlist ───────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
