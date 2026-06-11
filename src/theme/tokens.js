@@ -66,7 +66,11 @@ export const RADIUS = {
 export const FONT =
   "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
+// Monospace stack for operational labels, status lines, and section eyebrows.
+export const MONO =
+  "'SF Mono', 'Fira Mono', 'Consolas', 'Liberation Mono', monospace";
+
 // Fast, calm transitions on border/background only.
 export const TRANSITION = 'background 140ms ease, border-color 140ms ease, color 140ms ease';
 
-export default { COLORS, ACCENTS, ACCENT_RGB, SPACE, RADIUS, FONT, TRANSITION };
+export default { COLORS, ACCENTS, ACCENT_RGB, SPACE, RADIUS, FONT, MONO, TRANSITION };

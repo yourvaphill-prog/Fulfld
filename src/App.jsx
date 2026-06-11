@@ -5,7 +5,7 @@ import CatalogScraper from './catalog/CatalogScraper.jsx';
 import DecisionMakerFinder from './decision/DecisionMakerFinder.jsx';
 import CommandCenterLanding from './CommandCenterLanding.jsx';
 import fufldLogo from './assets/fufld-logo.png';
-import { COLORS } from './theme/tokens.js';
+import { COLORS, MONO } from './theme/tokens.js';
 import Papa from 'papaparse';
 import { Upload, Settings, Download, Users, X, ChevronDown, LogOut, Zap } from 'lucide-react';
 
@@ -760,10 +760,10 @@ export default function App() {
           ))}
           {(page === 'ppc' || page === 'home' || page === 'upc' || page === 'decision') && (
             <span style={{
-              color: '#1e293b', fontSize: 10, letterSpacing: '0.10em',
-              textTransform: 'uppercase', paddingLeft: 4,
+              color: COLORS.textDim, fontSize: 9, letterSpacing: '0.12em',
+              textTransform: 'uppercase', paddingLeft: 4, fontFamily: MONO,
             }}>
-              {page === 'home' ? 'Module Selection' : 'Command Center'}
+              Command Center
             </span>
           )}
         </nav>
