@@ -339,6 +339,10 @@ export default function DecisionMakerFinder() {
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <Chip label={`${result.pagesScanned?.length || 0} pages scanned`} color="#475569" />
                   <Chip
+                    label={`${result.peopleFound?.length || 0} ${result.peopleFound?.length === 1 ? 'person' : 'people'} found`}
+                    color={result.peopleFound?.length ? ACCENT : '#334155'}
+                  />
+                  <Chip
                     label={`${result.emails?.length || 0} email${result.emails?.length !== 1 ? 's' : ''}`}
                     color={result.emails?.length ? G : '#334155'}
                   />
@@ -466,14 +470,137 @@ export default function DecisionMakerFinder() {
               </SectionCard>
             )}
 
-            {/* Decision maker targets */}
+            {/* ── People Found ── */}
+            {result.peopleFound?.length > 0 && (
+              <SectionCard title="People Found" icon={<Users size={13} />}>
+                <div style={{
+                  color: '#475569', fontSize: 11, marginBottom: 12, lineHeight: 1.5,
+                }}>
+                  Extracted from public pages. Verify before contacting. Search links are generated — not verified profiles.
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead>
+                      <tr>
+                        {['#', 'Name', 'Title', 'Source', 'Email', 'Phone', 'Phone Type', 'LinkedIn Search', 'Google Search', 'Confidence'].map(h => (
+                          <th key={h} style={{
+                            textAlign: 'left', color: '#475569',
+                            fontSize: 9, fontWeight: 600,
+                            letterSpacing: '0.08em', textTransform: 'uppercase',
+                            padding: '0 8px 10px 0',
+                            borderBottom: `1px solid ${BORDER}`,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.peopleFound.map((p, i) => {
+                        const confColor =
+                          p.confidenceLabel === 'High'   ? '#00ff87' :
+                          p.confidenceLabel === 'Medium' ? '#fbbf24' : '#ef4444';
+                        const sourceHost = (p.sourceUrl || '').replace(/^https?:\/\//, '').split('/')[0];
+                        const sourcePath = (p.sourceUrl || '').replace(/^https?:\/\/[^/]+/, '') || '/';
+                        return (
+                          <tr key={i} style={{ borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '9px 8px 9px 0', color: '#475569', fontSize: 10 }}>{i + 1}</td>
+                            <td style={{ padding: '9px 8px 9px 0' }}>
+                              <span style={{ color: '#e2e8f0', fontWeight: i === 0 ? 700 : 500 }}>
+                                {p.name}
+                              </span>
+                              {i === 0 && (
+                                <span style={{
+                                  marginLeft: 7, fontSize: 8, color: ACCENT,
+                                  border: `1px solid ${ACCENT}40`, borderRadius: 4,
+                                  padding: '1px 5px', verticalAlign: 'middle',
+                                }}>
+                                  BEST MATCH
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0', color: '#94a3b8' }}>{p.title}</td>
+                            <td style={{ padding: '9px 8px 9px 0' }}>
+                              <a
+                                href={p.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={p.sourceUrl}
+                                style={{ color: '#475569', fontSize: 10, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                              >
+                                {sourcePath.length > 18 ? sourcePath.slice(0, 18) + '…' : sourcePath}
+                                <ExternalLink size={8} style={{ flexShrink: 0 }} />
+                              </a>
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0' }}>
+                              {p.email
+                                ? <a href={`mailto:${p.email}`} style={{ color: G, fontSize: 10, textDecoration: 'none' }}>{p.email}</a>
+                                : <span style={{ color: '#334155', fontSize: 10 }}>—</span>
+                              }
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0', color: p.phone ? G : '#334155', fontSize: 10, whiteSpace: 'nowrap' }}>
+                              {p.phone || '—'}
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0', color: '#475569', fontSize: 10, whiteSpace: 'nowrap' }}>
+                              {p.phoneType || '—'}
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0' }}>
+                              <a
+                                href={p.linkedinSearchUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#3b82f6', fontSize: 10, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}
+                              >
+                                Search LinkedIn <ExternalLink size={8} />
+                              </a>
+                            </td>
+                            <td style={{ padding: '9px 8px 9px 0' }}>
+                              <a
+                                href={p.googleSearchUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#64748b', fontSize: 10, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}
+                              >
+                                Search Google <ExternalLink size={8} />
+                              </a>
+                            </td>
+                            <td style={{ padding: '9px 0' }}>
+                              <span style={{
+                                padding: '2px 7px', borderRadius: 4,
+                                background: `${confColor}15`,
+                                border: `1px solid ${confColor}35`,
+                                color: confColor, fontSize: 9, fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {p.confidenceLabel}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </SectionCard>
+            )}
+
+            {/* ── Fallback Target Roles ── */}
             {result.decisionMakerTargets?.length > 0 && (
-              <SectionCard title="Decision Maker Targets" icon={<Search size={13} />}>
+              <SectionCard title="Fallback Target Roles" icon={<Search size={13} />}>
+                <div style={{
+                  color: '#475569', fontSize: 11, marginBottom: 12, lineHeight: 1.5,
+                }}>
+                  Generated search links for target roles — not verified person profiles.
+                  {result.peopleFound?.length > 0
+                    ? ' Use these to supplement the people found above.'
+                    : ' Use these if no real people were found above.'}
+                </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead>
                       <tr>
-                        {['#', 'Title', 'LinkedIn Search', 'Google Search'].map(h => (
+                        {['#', 'Role', 'LinkedIn Search', 'Google Search'].map(h => (
                           <th key={h} style={{
                             textAlign: 'left', color: '#475569',
                             fontSize: 10, fontWeight: 600,
@@ -519,7 +646,7 @@ export default function DecisionMakerFinder() {
                                 display: 'inline-flex', alignItems: 'center', gap: 3,
                               }}
                             >
-                              LinkedIn <ExternalLink size={9} />
+                              Search LinkedIn <ExternalLink size={9} />
                             </a>
                           </td>
                           <td style={{ padding: '9px 0' }}>
@@ -532,7 +659,7 @@ export default function DecisionMakerFinder() {
                                 display: 'inline-flex', alignItems: 'center', gap: 3,
                               }}
                             >
-                              Google <ExternalLink size={9} />
+                              Search Google <ExternalLink size={9} />
                             </a>
                           </td>
                         </tr>
