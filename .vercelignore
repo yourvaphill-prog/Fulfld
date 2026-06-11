@@ -1,0 +1,9 @@
+api/catalog/htmlPageScraper.js
+api/catalog/productNormalizer.js
+api/catalog/shopifyFetcher.js
+api/catalog/sitemapDiscoverer.js
+api/catalog/urlUtils.js
+api/catalog/wooCommerceFetcher.js
+api/decision/contactExtractor.js
+api/decision/decisionMakerRanker.js
+api/decision/websiteScanner.js
