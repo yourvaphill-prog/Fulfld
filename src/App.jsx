@@ -741,7 +741,7 @@ export default function App() {
 
         {/* Nav — Brand Scout tabs when in BS; labels when in PPC/Home */}
         <nav style={{ display: 'flex', gap: 2, flex: 1, alignItems: 'center' }}>
-          {page !== 'ppc' && page !== 'home' && page !== 'upc' && page !== 'decision' && [
+          {page !== 'ppc' && page !== 'home' && page !== 'upc' && page !== 'decision' && page !== 'checklist' && [
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'kpi',       label: 'KPI Settings' },
             { id: 'export',    label: 'Export' },
@@ -759,7 +759,7 @@ export default function App() {
               {label}
             </button>
           ))}
-          {(page === 'ppc' || page === 'home' || page === 'upc' || page === 'decision') && (
+          {(page === 'ppc' || page === 'home' || page === 'upc' || page === 'decision' || page === 'checklist') && (
             <span style={{
               color: COLORS.textDim, fontSize: 9, letterSpacing: '0.12em',
               textTransform: 'uppercase', paddingLeft: 4, fontFamily: MONO,
@@ -869,15 +869,15 @@ export default function App() {
             </div>
           )}
 
-          {/* Upload button */}
-          <button onClick={() => setShowUpload(s => !s)} style={{
+          {/* Upload button — hidden on checklist (not relevant there) */}
+          {page !== 'checklist' && <button onClick={() => setShowUpload(s => !s)} style={{
             background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`,
             borderRadius: 7, padding: '6px 12px', color: '#94a3b8',
             fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             <Upload size={12} /> Upload CSV
-          </button>
+          </button>}
 
           {/* User pill */}
           <div style={{ position: 'relative' }}>
