@@ -321,6 +321,8 @@ function NewProjectModal({ onClose, onCreate }) {
 function TaskRow({ task, onUpdate, rowIndex }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesVal,     setNotesVal]     = useState(task.notes || '');
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleVal,     setTitleVal]     = useState(task.step_title || '');
   const overdue = isOverdue(task);
   const sm      = STATUS_STYLE[task.status] || STATUS_STYLE['Not Started'];
 
@@ -328,6 +330,11 @@ function TaskRow({ task, onUpdate, rowIndex }) {
   useEffect(() => {
     if (!editingNotes) setNotesVal(task.notes || '');
   }, [task.notes, editingNotes]);
+
+  // Sync titleVal if step_title changes externally (realtime update)
+  useEffect(() => {
+    if (!editingTitle) setTitleVal(task.step_title || '');
+  }, [task.step_title, editingTitle]);
 
   const borderLeft =
     task.status === 'Blocked' ? '3px solid rgba(248,113,113,0.7)' :
@@ -343,14 +350,44 @@ function TaskRow({ task, onUpdate, rowIndex }) {
 
   return (
     <tr style={{ background: rowBg, borderLeft }}>
-      {/* Step Title */}
+      {/* Step Title — inline editable */}
       <td style={{ ...cellBorder, padding: '9px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           {task.hard_stop && (
             <span title="Hard Stop — project must not proceed past this step until complete" style={{ fontSize: 12, lineHeight: 1, flexShrink: 0 }}>🛑</span>
           )}
-          <span style={{ color: COLORS.text, fontSize: 12 }}>{task.step_title}</span>
-          {overdue && (
+          {editingTitle ? (
+            <input
+              autoFocus
+              value={titleVal}
+              onChange={e => setTitleVal(e.target.value)}
+              onBlur={() => {
+                const v = titleVal.trim();
+                if (v && v !== task.step_title) onUpdate(task.id, { step_title: v });
+                else setTitleVal(task.step_title || '');
+                setEditingTitle(false);
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.target.blur(); }
+                if (e.key === 'Escape') { setTitleVal(task.step_title || ''); setEditingTitle(false); }
+              }}
+              style={{
+                background: COLORS.surfaceInset, border: `1px solid ${COLORS.border}`,
+                borderRadius: 4, color: COLORS.text, fontSize: 12,
+                fontFamily: FONT, padding: '2px 6px', outline: 'none',
+                width: '100%', boxSizing: 'border-box',
+              }}
+            />
+          ) : (
+            <span
+              onClick={() => { setTitleVal(task.step_title || ''); setEditingTitle(true); }}
+              title="Click to rename"
+              style={{ color: COLORS.text, fontSize: 12, cursor: 'text', flex: 1 }}
+            >
+              {task.step_title}
+            </span>
+          )}
+          {overdue && !editingTitle && (
             <span style={{
               color: '#f87171', fontSize: 9, fontFamily: MONO,
               background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)',
