@@ -36,6 +36,7 @@ export const ACCENTS = {
   upcScanner: '#C99A4F', // amber (muted)
   catalog:    '#8B83C9', // slate violet
   contact:    '#C97E8B', // slate rose (external)
+  checklist:  '#4FB6A8', // teal
 };
 
 // rgba helpers for translucent accent backgrounds (icon tiles / badges) without
@@ -46,6 +47,7 @@ export const ACCENT_RGB = {
   upcScanner: '201,154,79',
   catalog:    '139,131,201',
   contact:    '201,126,139',
+  checklist:  '79,182,168',
 };
 
 export const SPACE = {

@@ -3,6 +3,7 @@ import PPCApp from './ppc/PPCApp.jsx';
 import UPCScanner from './upc/UPCScanner.jsx';
 import CatalogScraper from './catalog/CatalogScraper.jsx';
 import DecisionMakerFinder from './decision/DecisionMakerFinder.jsx';
+import ChecklistApp from './checklist/ChecklistApp.jsx';
 import CommandCenterLanding from './CommandCenterLanding.jsx';
 import fufldLogo from './assets/fufld-logo.png';
 import { COLORS, MONO } from './theme/tokens.js';
@@ -805,14 +806,14 @@ export default function App() {
                 onClick={() => setShowModuleSwitcher(s => !s)}
                 style={{
                   background: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${page === 'ppc' ? 'rgba(6,182,212,0.28)' : page === 'upc' ? 'rgba(245,158,11,0.28)' : page === 'catalog' ? 'rgba(167,139,250,0.28)' : page === 'decision' ? 'rgba(251,113,133,0.28)' : BORDER}`,
+                  border: `1px solid ${page === 'ppc' ? 'rgba(6,182,212,0.28)' : page === 'upc' ? 'rgba(245,158,11,0.28)' : page === 'catalog' ? 'rgba(167,139,250,0.28)' : page === 'decision' ? 'rgba(251,113,133,0.28)' : page === 'checklist' ? 'rgba(79,182,168,0.28)' : BORDER}`,
                   borderRadius: 7, padding: '5px 12px',
-                  color: page === 'ppc' ? '#06b6d4' : page === 'upc' ? '#f59e0b' : page === 'catalog' ? '#a78bfa' : page === 'decision' ? '#fb7185' : '#94a3b8',
+                  color: page === 'ppc' ? '#06b6d4' : page === 'upc' ? '#f59e0b' : page === 'catalog' ? '#a78bfa' : page === 'decision' ? '#fb7185' : page === 'checklist' ? '#4FB6A8' : '#94a3b8',
                   fontSize: 11, fontFamily: 'inherit', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
-                {page === 'ppc' ? '⚡ PPC Pilot' : page === 'upc' ? '🏷️ UPC Scanner' : page === 'catalog' ? '🌐 Catalog Scraper' : page === 'decision' ? '🎯 Decision Maker' : '🔍 Brand Scout'}
+                {page === 'ppc' ? '⚡ PPC Pilot' : page === 'upc' ? '🏷️ UPC Scanner' : page === 'catalog' ? '🌐 Catalog Scraper' : page === 'decision' ? '🎯 Decision Maker' : page === 'checklist' ? '✅ Project Checklist' : '🔍 Brand Scout'}
                 <ChevronDown size={10} />
               </button>
               {showModuleSwitcher && (
@@ -837,13 +838,15 @@ export default function App() {
                     { id: 'ppc',       label: '⚡ PPC Pilot',               accent: '#06b6d4' },
                     { id: 'upc',       label: '🏷️ UPC Scanner',             accent: '#f59e0b' },
                     { id: 'catalog',   label: '🌐 Website Catalog Scraper', accent: '#a78bfa' },
+                    { id: 'checklist', label: '✅ Project Checklist',        accent: '#4FB6A8' },
                   ].map(({ id, label, accent }) => {
                     const active =
-                      id === 'ppc'     ? page === 'ppc' :
-                      id === 'upc'     ? page === 'upc' :
-                      id === 'catalog' ? page === 'catalog' :
-                      id === 'home'    ? false :
-                      page !== 'ppc' && page !== 'upc' && page !== 'catalog' && page !== 'decision' && page !== 'home';
+                      id === 'ppc'       ? page === 'ppc' :
+                      id === 'upc'       ? page === 'upc' :
+                      id === 'catalog'   ? page === 'catalog' :
+                      id === 'checklist' ? page === 'checklist' :
+                      id === 'home'      ? false :
+                      page !== 'ppc' && page !== 'upc' && page !== 'catalog' && page !== 'decision' && page !== 'checklist' && page !== 'home';
                     return (
                       <button key={id}
                         onClick={() => { setPage(id); setShowModuleSwitcher(false); }}
@@ -973,8 +976,8 @@ export default function App() {
       )}
 
       {/* ── Main content ── */}
-      {/* Brand Scout — always mounted, hidden when on PPC, UPC, Catalog, Decision Maker, or home */}
-      <div style={{ display: (page === 'ppc' || page === 'home' || page === 'upc' || page === 'catalog' || page === 'decision') ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
+      {/* Brand Scout — always mounted, hidden when on other modules or home */}
+      <div style={{ display: (page === 'ppc' || page === 'home' || page === 'upc' || page === 'catalog' || page === 'decision' || page === 'checklist') ? 'none' : 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Content area ── */}
         <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
@@ -1084,6 +1087,11 @@ export default function App() {
       {/* Decision Maker Finder — always mounted to preserve scan state */}
       <div style={{ display: page === 'decision' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
         <DecisionMakerFinder />
+      </div>
+
+      {/* Project Checklist — always mounted to preserve state */}
+      <div style={{ display: page === 'checklist' ? 'flex' : 'none', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
+        <ChecklistApp onSwitchModule={setPage} userName={userName} />
       </div>
 
       {/* ── Brand detail slide-in ── */}

@@ -35,6 +35,14 @@ const MODULES = [
     rgb:        ACCENT_RGB.catalog,
     capability: 'Shopify · WooCommerce · CSV export',
   },
+  {
+    id:         'checklist',
+    icon:       'CL',
+    name:       'Project Checklist',
+    accent:     ACCENTS.checklist,
+    rgb:        ACCENT_RGB.checklist,
+    capability: 'SOPs · Templates · Task tracking',
+  },
 ];
 
 const CONTACT_GPT_URL =
