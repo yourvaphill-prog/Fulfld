@@ -726,7 +726,8 @@ export default function App() {
       background: COLORS.bg,
     }}>
 
-      {/* ── Header ── */}
+      {/* ── Header (hidden on the light Command Center landing) ── */}
+      {page !== 'home' && (
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
         background: COLORS.bg,
@@ -930,6 +931,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      )}
 
       {/* ── Upload drop-down panel ── */}
       {showUpload && (

@@ -1,386 +1,178 @@
-import React from 'react';
-import { COLORS, ACCENTS, ACCENT_RGB, FONT, MONO, TRANSITION } from './theme/tokens.js';
+import { useState, useRef, useEffect } from 'react';
+import { ACCENTS } from './theme/tokens.js';
+import './CommandCenterLanding.css';
 
-// ── Module definitions (internal workflows) ────────────────────────────────────
-const MODULES = [
-  {
-    id:         'dashboard',
-    icon:       'BS',
-    name:       'Brand Scout',
-    accent:     ACCENTS.brandScout,
-    rgb:        ACCENT_RGB.brandScout,
-    capability: 'Evaluate brands · Score · Pipeline',
-  },
-  {
-    id:         'ppc',
-    icon:       'PPC',
-    name:       'PPC Pilot',
-    accent:     ACCENTS.ppcPilot,
-    rgb:        ACCENT_RGB.ppcPilot,
-    capability: 'Campaign analysis · Keyword builder · Reports',
-  },
-  {
-    id:         'upc',
-    icon:       'UPC',
-    name:       'UPC Scanner',
-    accent:     ACCENTS.upcScanner,
-    rgb:        ACCENT_RGB.upcScanner,
-    capability: 'ASIN matching · Profit calc · Lead scoring',
-  },
-  {
-    id:         'catalog',
-    icon:       'CAT',
-    name:       'Website Catalog Scraper',
-    accent:     ACCENTS.catalog,
-    rgb:        ACCENT_RGB.catalog,
-    capability: 'Shopify · WooCommerce · CSV export',
-  },
-  {
-    id:         'checklist',
-    icon:       'CL',
-    name:       'Project Checklist',
-    accent:     ACCENTS.checklist,
-    rgb:        ACCENT_RGB.checklist,
-    capability: 'SOPs · Templates · Task tracking',
-  },
-];
+// ─── Command Center landing — light clickable 3D module-card hero ───────────────
+// The cards ARE the navigation. Each card flips ("Opening …") then calls
+// onSelectModule(id) — the same contract App.jsx already uses (setPage(id)), so no
+// routing/module/API/Supabase logic changes. Card content is visual sample data
+// only (no live data wired this pass). Contact Intelligence stays a small external
+// GPT link, per the approved direction.
 
 const CONTACT_GPT_URL =
   'https://chatgpt.com/g/g-6a297117a7908191bf496698addb9419-fufld-decision-maker-finder';
 
-// ── Landing — command console launcher ────────────────────────────────────────
-export default function CommandCenterLanding({ onSelectModule }) {
-  return (
-    <div style={{
-      flex: 1,
-      overflowY: 'auto',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      padding: '44px 24px 64px',
-    }}>
-      <div style={{ width: '100%', maxWidth: 600 }}>
+const prefersReduced = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        {/* ── Identity block ── */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{
-            color: COLORS.text,
-            fontSize: 20,
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-            margin: '0 0 9px',
-            fontFamily: FONT,
-          }}>
-            FUFLD Command Center
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: ACCENTS.brandScout,
-              display: 'inline-block', flexShrink: 0,
-            }} />
-            <span style={{
-              color: COLORS.textDim,
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              fontFamily: MONO,
-            }}>
-              Operational
+// Subtle pointer parallax → writes --px/--py on the stage. Live-gated: disabled on
+// coarse pointers, narrow viewports, and prefers-reduced-motion (idle float only).
+function usePointerParallax(maxShift = 16) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const pointerMQ = window.matchMedia('(pointer: fine)');
+    const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const active = () => pointerMQ.matches && !reduceMQ.matches && window.innerWidth >= 900;
+    let raf = 0, tnx = 0, tny = 0, cnx = 0, cny = 0;
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
+    const set = () => {
+      el.style.setProperty('--px', `${(cnx * maxShift).toFixed(2)}px`);
+      el.style.setProperty('--py', `${(cny * maxShift).toFixed(2)}px`);
+    };
+    const tick = () => {
+      cnx += (tnx - cnx) * 0.08; cny += (tny - cny) * 0.08; set();
+      if (Math.abs(tnx - cnx) > 0.001 || Math.abs(tny - cny) > 0.001) raf = requestAnimationFrame(tick);
+      else raf = 0;
+    };
+    const onMove = (e) => {
+      if (!active()) { tnx = 0; tny = 0; if (!raf) raf = requestAnimationFrame(tick); return; }
+      const r = el.getBoundingClientRect();
+      tnx = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2));
+      tny = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2));
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const onLeave = () => { tnx = 0; tny = 0; if (!raf) raf = requestAnimationFrame(tick); };
+    set();
+    el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseleave', onLeave);
+    return () => { el.removeEventListener('mousemove', onMove); el.removeEventListener('mouseleave', onLeave); if (raf) cancelAnimationFrame(raf); };
+  }, [maxShift]);
+  return ref;
+}
+
+function ModuleCard({ posClass, id, title, badge, accent, onSelectModule, children }) {
+  const [flipping, setFlipping] = useState(false);
+  const handle = () => {
+    if (flipping) return;
+    if (prefersReduced()) { onSelectModule(id); return; }
+    setFlipping(true);
+    window.setTimeout(() => onSelectModule(id), 620); // matches flip duration
+  };
+  return (
+    <button type="button" className={`ccl-mod ${posClass}`} onClick={handle} aria-label={`Open ${title}`}>
+      <span className="ccl-mod-float">
+        <span className={`ccl-mod-flip ${flipping ? 'is-flipping' : ''}`}>
+          <span className="ccl-mod-front">
+            <span className="ccl-mh">
+              <span className="ccl-badge" style={{ background: `${accent}22`, color: accent }}>{badge}</span>
+              <span className="ccl-title">{title}</span>
+              <span className="ccl-open">Open →</span>
             </span>
-            <span style={{ color: '#1E2A38', fontFamily: MONO }}>·</span>
-            <span style={{
-              color: COLORS.textDim,
-              fontSize: 10,
-              letterSpacing: '0.05em',
-              fontFamily: MONO,
-            }}>
-              AWL / FUFLD Internal
-            </span>
-          </div>
-        </div>
-
-        {/* ── Modules ── */}
-        <EyebrowLabel>Modules</EyebrowLabel>
-        <div style={{
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 8,
-          overflow: 'hidden',
-          background: COLORS.surface,
-          marginBottom: 24,
-        }}>
-          {MODULES.map((mod, idx) => (
-            <ToolRow
-              key={mod.id}
-              tool={mod}
-              isLast={idx === MODULES.length - 1}
-              onOpen={() => onSelectModule(mod.id)}
-            />
-          ))}
-        </div>
-
-        {/* ── External intelligence ── */}
-        <EyebrowLabel>External Intelligence</EyebrowLabel>
-        <div style={{
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 8,
-          overflow: 'hidden',
-          background: COLORS.surface,
-        }}>
-          <ExternalRow href={CONTACT_GPT_URL} />
-        </div>
-
-        {/* ── Footer ── */}
-        <div style={{
-          marginTop: 32,
-          paddingTop: 16,
-          borderTop: `1px solid ${COLORS.border}`,
-          color: '#1E2A38',
-          fontSize: 10,
-          letterSpacing: '0.05em',
-          fontFamily: MONO,
-        }}>
-          FUFLD · Fulfld Brand Intelligence Platform
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-// ── Eyebrow label (section marker) ────────────────────────────────────────────
-function EyebrowLabel({ children }) {
-  return (
-    <div style={{
-      color: COLORS.textDim,
-      fontSize: 9,
-      fontWeight: 600,
-      letterSpacing: '0.14em',
-      textTransform: 'uppercase',
-      marginBottom: 6,
-      fontFamily: MONO,
-    }}>
-      {children}
-    </div>
-  );
-}
-
-// ── Internal tool row ─────────────────────────────────────────────────────────
-function ToolRow({ tool, isLast, onOpen }) {
-  const [active, setActive] = React.useState(false);
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); }
-      }}
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => setActive(false)}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 13,
-        padding: '13px 16px',
-        background: active ? COLORS.surfaceHover : 'transparent',
-        borderBottom: isLast ? 'none' : `1px solid ${COLORS.border}`,
-        cursor: 'pointer',
-        transition: TRANSITION,
-        outline: 'none',
-        userSelect: 'none',
-      }}
-    >
-      {/* Left accent bar — brightens on hover */}
-      <div style={{
-        position: 'absolute',
-        left: 0, top: 0, bottom: 0,
-        width: 3,
-        background: tool.accent,
-        opacity: active ? 1 : 0.28,
-        transition: 'opacity 140ms ease',
-        borderRadius: '0 2px 2px 0',
-      }} />
-
-      {/* Icon tile */}
-      <div style={{
-        width: 28, height: 28,
-        borderRadius: 6,
-        background: `rgba(${tool.rgb},0.09)`,
-        border: `1px solid rgba(${tool.rgb},${active ? '0.30' : '0.18'})`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 9, fontWeight: 700, fontFamily: MONO, color: tool.accent,
-        letterSpacing: '0.02em', flexShrink: 0,
-        transition: 'border-color 140ms ease',
-      }}>
-        {tool.icon}
-      </div>
-
-      {/* Name + capability */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          color: active ? COLORS.text : COLORS.textMuted,
-          fontSize: 13,
-          fontWeight: 600,
-          marginBottom: 1,
-          fontFamily: FONT,
-          transition: 'color 140ms ease',
-        }}>
-          {tool.name}
-        </div>
-        <div style={{
-          color: COLORS.textDim,
-          fontSize: 11,
-          fontFamily: FONT,
-        }}>
-          {tool.capability}
-        </div>
-      </div>
-
-      {/* Arrow — accent color on hover, dim otherwise */}
-      <span style={{
-        color: active ? tool.accent : COLORS.textDim,
-        fontSize: 12,
-        fontWeight: 700,
-        flexShrink: 0,
-        fontFamily: FONT,
-        transition: 'color 140ms ease',
-        opacity: active ? 1 : 0.5,
-      }}>
-        →
-      </span>
-    </div>
-  );
-}
-
-// ── External tool row (opens in new tab) ──────────────────────────────────────
-function ExternalRow({ href }) {
-  const [active, setActive] = React.useState(false);
-  const accent = ACCENTS.contact;
-  const rgb    = ACCENT_RGB.contact;
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => setActive(false)}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 13,
-        padding: '13px 16px',
-        background: active ? COLORS.surfaceHover : 'transparent',
-        textDecoration: 'none',
-        cursor: 'pointer',
-        transition: TRANSITION,
-        outline: 'none',
-        userSelect: 'none',
-      }}
-    >
-      {/* Left accent bar */}
-      <div style={{
-        position: 'absolute',
-        left: 0, top: 0, bottom: 0,
-        width: 3,
-        background: accent,
-        opacity: active ? 1 : 0.28,
-        transition: 'opacity 140ms ease',
-        borderRadius: '0 2px 2px 0',
-      }} />
-
-      {/* Icon tile */}
-      <div style={{
-        width: 28, height: 28,
-        borderRadius: 6,
-        background: `rgba(${rgb},0.09)`,
-        border: `1px solid rgba(${rgb},${active ? '0.30' : '0.18'})`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 9, fontWeight: 700, fontFamily: MONO, color: accent,
-        letterSpacing: '0.02em', flexShrink: 0,
-        transition: 'border-color 140ms ease',
-      }}>
-        CI
-      </div>
-
-      {/* Name + capability */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          marginBottom: 1,
-        }}>
-          <span style={{
-            color: active ? COLORS.text : COLORS.textMuted,
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: FONT,
-            transition: 'color 140ms ease',
-          }}>
-            Contact Intelligence
+            {children}
           </span>
-          <RowBadge>GPT</RowBadge>
-          <RowBadge>External</RowBadge>
-        </div>
-        <div style={{
-          color: COLORS.textDim,
-          fontSize: 11,
-          fontFamily: FONT,
-        }}>
-          Decision makers · Caller scripts · LinkedIn angles
-        </div>
-      </div>
-
-      {/* External arrow + sub-label */}
-      <div style={{
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'flex-end', gap: 2, flexShrink: 0,
-      }}>
-        <span style={{
-          color: active ? accent : COLORS.textDim,
-          fontSize: 13,
-          fontWeight: 700,
-          fontFamily: FONT,
-          transition: 'color 140ms ease',
-        }}>
-          ↗
+          <span className="ccl-mod-back">
+            <span className="ccl-dots"><i /><i /><i /></span>
+            Opening {title}…
+          </span>
         </span>
-        <span style={{
-          color: '#1E2A38',
-          fontSize: 9,
-          fontFamily: MONO,
-          letterSpacing: '0.04em',
-          whiteSpace: 'nowrap',
-        }}>
-          Opens in ChatGPT
-        </span>
-      </div>
-    </a>
+      </span>
+    </button>
   );
 }
 
-// ── Row badge ─────────────────────────────────────────────────────────────────
-function RowBadge({ children }) {
+function MiniTrend({ color = '#4F8CC9' }) {
+  const d = 'M2,26 L16,22 L30,24 L44,16 L58,18 L72,9 L86,12 L100,4';
   return (
-    <span style={{
-      fontSize: 8,
-      fontWeight: 600,
-      letterSpacing: '0.08em',
-      color: COLORS.textDim,
-      border: `1px solid ${COLORS.border}`,
-      borderRadius: 3,
-      padding: '1px 5px',
-      textTransform: 'uppercase',
-      fontFamily: FONT,
-    }}>
-      {children}
-    </span>
+    <svg className="ccl-trend" viewBox="0 0 102 30" preserveAspectRatio="none" aria-hidden="true">
+      <path d={`${d} L100,30 L2,30 Z`} fill={`${color}26`} />
+      <path d={d} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export default function CommandCenterLanding({ onSelectModule }) {
+  const stageRef = usePointerParallax(16);
+
+  return (
+    <div className="ccl-root">
+      <section className="ccl-shell">
+        {/* Left: copy */}
+        <div className="ccl-copy">
+          <div className="ccl-eyebrow"><span className="ccl-dot" /> All-in-one operations command center</div>
+          <h1 className="ccl-headline">Operate Smarter.<br /><span className="ccl-grad">Scale Faster.</span></h1>
+          <p className="ccl-sub">
+            Brand research, PPC analysis, product scanning, catalog extraction, and
+            workflow tracking — every tool in one place.
+          </p>
+          <div className="ccl-cue">↳ Choose a module to open</div>
+          <div>
+            <a className="ccl-ext" href={CONTACT_GPT_URL} target="_blank" rel="noreferrer">
+              Contact Intelligence
+              <span className="ccl-ext-badge">GPT ↗</span>
+              <small>Decision makers · caller scripts</small>
+            </a>
+          </div>
+        </div>
+
+        {/* Right: clickable 3D card cluster */}
+        <div className="ccl-stage" ref={stageRef}>
+          <div className="ccl-cluster">
+            {/* 1 — Brand Scout → dashboard */}
+            <ModuleCard posClass="ccl-pos-1" id="dashboard" title="Brand Scout" badge="BS" accent={ACCENTS.brandScout} onSelectModule={onSelectModule}>
+              <span className="ccl-big">128<small>Opportunities</small></span>
+              <span className="ccl-chips">
+                <span className="ccl-chip ccl-chip-green">12 Submitted</span>
+                <span className="ccl-chip ccl-chip-amber">8 Contacted</span>
+              </span>
+            </ModuleCard>
+
+            {/* 2 — PPC Pilot → ppc */}
+            <ModuleCard posClass="ccl-pos-2" id="ppc" title="PPC Pilot" badge="PPC" accent={ACCENTS.ppcPilot} onSelectModule={onSelectModule}>
+              <span className="ccl-row">
+                <span className="ccl-stat"><b>24.5%</b><small>ACOS</small></span>
+                <span className="ccl-stat"><b>4.1x</b><small>ROAS</small></span>
+              </span>
+              <MiniTrend color={ACCENTS.ppcPilot} />
+            </ModuleCard>
+
+            {/* 3 — UPC Scanner → upc */}
+            <ModuleCard posClass="ccl-pos-3" id="upc" title="UPC Scanner" badge="UPC" accent={ACCENTS.upcScanner} onSelectModule={onSelectModule}>
+              <span className="ccl-big">36<small>Scans today</small></span>
+              <span className="ccl-chips">
+                <span className="ccl-chip ccl-chip-green">21 Approved</span>
+                <span className="ccl-chip ccl-chip-red">6 Denied</span>
+              </span>
+            </ModuleCard>
+
+            {/* 4 — Website Catalog Scraper → catalog */}
+            <ModuleCard posClass="ccl-pos-4" id="catalog" title="Catalog Scraper" badge="CAT" accent={ACCENTS.catalog} onSelectModule={onSelectModule}>
+              <span className="ccl-big">1,204<small>Products</small></span>
+              <span className="ccl-chips">
+                <span className="ccl-chip ccl-chip-blue">CSV ready</span>
+              </span>
+            </ModuleCard>
+
+            {/* 5 — Project Checklist → checklist */}
+            <ModuleCard posClass="ccl-pos-5" id="checklist" title="Project Checklist" badge="CL" accent={ACCENTS.checklist} onSelectModule={onSelectModule}>
+              <span className="ccl-row ccl-row-tight"><small>Tasks completed</small><b className="ccl-progval">23 / 42</b></span>
+              <span className="ccl-progress"><i style={{ width: '55%' }} /></span>
+            </ModuleCard>
+
+            {/* 6 — Decision Maker Finder → decision */}
+            <ModuleCard posClass="ccl-pos-6" id="decision" title="Decision Maker" badge="DM" accent={ACCENTS.contact} onSelectModule={onSelectModule}>
+              <span className="ccl-row">
+                <span className="ccl-stat"><b>48</b><small>Leads</small></span>
+                <span className="ccl-stat"><b>12</b><small>Decision makers</small></span>
+              </span>
+              <span className="ccl-chips">
+                <span className="ccl-chip ccl-chip-amber">Outreach active</span>
+              </span>
+            </ModuleCard>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

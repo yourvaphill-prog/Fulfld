@@ -1,0 +1,189 @@
+/* ─── Command Center landing — bright light hero ─────────────────────────────
+   Scoped under .ccl-root so nothing leaks into the dark Operations Console app.
+   The cards ARE the navigation: each flips ("Opening …") then routes via
+   onSelectModule(id). No CTA buttons, no robot, no overlapping cards. */
+
+.ccl-root {
+  --ccl-ink: #0b1220;
+  --ccl-ink-soft: #475569;
+  --ccl-mint: #34d399;
+  --ccl-teal: #2dd4bf;
+  --ccl-blue: #3b82f6;
+
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background:
+    radial-gradient(120% 90% at 80% 26%, rgba(45, 212, 191, 0.18), transparent 55%),
+    radial-gradient(90% 80% at 94% 42%, rgba(59, 130, 246, 0.14), transparent 60%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2fb 100%);
+  color: var(--ccl-ink);
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+.ccl-shell {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 40px 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: 24px;
+  align-items: center;
+  min-height: 620px;
+}
+
+/* ── Left: copy ── */
+.ccl-copy { max-width: 480px; }
+
+.ccl-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ccl-ink-soft);
+  background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px; padding: 6px 14px; margin-bottom: 22px;
+}
+.ccl-eyebrow .ccl-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ccl-mint); box-shadow: 0 0 8px var(--ccl-mint); }
+
+.ccl-headline {
+  margin: 0 0 18px;
+  font-family: 'Bricolage Grotesque', 'Poppins', sans-serif;
+  font-size: clamp(40px, 5vw, 64px); line-height: 1.0; font-weight: 800;
+  letter-spacing: -0.02em; color: var(--ccl-ink);
+}
+.ccl-headline .ccl-grad {
+  background: linear-gradient(100deg, var(--ccl-teal), var(--ccl-blue));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.ccl-sub {
+  margin: 0 0 24px; font-family: 'Poppins', sans-serif; font-size: 15px;
+  line-height: 1.7; color: var(--ccl-ink-soft); max-width: 430px;
+}
+
+.ccl-cue {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500; color: #0f766e;
+  background: rgba(45, 212, 191, 0.12); border: 1px solid rgba(45, 212, 191, 0.3);
+  border-radius: 999px; padding: 7px 16px; margin-bottom: 18px;
+}
+
+.ccl-ext {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 12.5px; color: var(--ccl-ink-soft);
+  text-decoration: none; border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(255, 255, 255, 0.6); border-radius: 10px; padding: 9px 14px;
+  transition: border-color 0.18s ease, transform 0.15s ease;
+}
+.ccl-ext:hover { border-color: var(--ccl-blue); transform: translateY(-1px); }
+.ccl-ext .ccl-ext-badge {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #be185d; background: #fce7f3; border-radius: 5px; padding: 2px 6px;
+}
+.ccl-ext small { color: #94a3b8; font-size: 11px; }
+
+/* ── Right: clickable 3D card cluster ── */
+.ccl-stage { position: relative; min-height: 620px; display: flex; align-items: center; justify-content: center; perspective: 1500px; }
+.ccl-cluster { position: relative; width: 100%; max-width: 560px; height: 600px; }
+
+.ccl-mod {
+  position: absolute; width: 252px; height: 168px; padding: 0; border: none; background: none;
+  cursor: pointer; perspective: 1100px; text-align: left;
+  transform: translate3d(calc(var(--px, 0px) * var(--depth, 1)), calc(var(--py, 0px) * var(--depth, 1)), 0);
+  transition: transform 0.3s ease-out;
+}
+.ccl-mod-float { display: block; width: 100%; height: 100%; transform-style: preserve-3d; animation: ccl-float var(--dur, 8s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+.ccl-mod-flip {
+  position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d;
+  transform: rotateY(var(--tilt, 0deg));
+  transition: transform 0.62s cubic-bezier(0.5, 0.05, 0.2, 1);
+}
+.ccl-mod-flip.is-flipping { transform: rotateY(180deg); }
+.ccl-mod:not(:disabled):hover .ccl-mod-flip { transform: rotateY(var(--tilt, 0deg)) translateZ(34px); }
+.ccl-mod:not(:disabled):hover .ccl-mod-front { box-shadow: 0 40px 70px -28px rgba(30, 64, 120, 0.5), inset 0 1px 0 rgba(255,255,255,0.95); }
+
+.ccl-mod-front, .ccl-mod-back {
+  position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  border-radius: 20px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.97), rgba(244, 248, 253, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 26px 50px -24px rgba(30, 64, 120, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.ccl-mod-front { display: flex; flex-direction: column; padding: 15px 16px; transition: box-shadow 0.2s ease; }
+.ccl-mod-back {
+  transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 600; color: #0f766e;
+  background: linear-gradient(165deg, rgba(236, 254, 250, 0.96), rgba(239, 246, 255, 0.92));
+}
+.ccl-dots { display: inline-flex; gap: 5px; }
+.ccl-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--ccl-teal); opacity: 0.4; }
+.ccl-mod-flip.is-flipping .ccl-dots i { animation: ccl-dot 1s ease-in-out infinite; }
+.ccl-mod-flip.is-flipping .ccl-dots i:nth-child(2) { animation-delay: 0.15s; }
+.ccl-mod-flip.is-flipping .ccl-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+/* Cluster positions: 2 staggered columns, no overlap. */
+.ccl-pos-1 { left: 0;   top: 2px;   --depth: 1.15; --tilt: -6deg; --dur: 8s;   --delay: 0s;   z-index: 6; }
+.ccl-pos-2 { right: 0;  top: 42px;  --depth: 0.7;  --tilt: 6deg;  --dur: 7.3s; --delay: 0.5s; z-index: 5; }
+.ccl-pos-3 { left: 3%;  top: 218px; --depth: 1.4;  --tilt: 4deg;  --dur: 8.6s; --delay: 1s;   z-index: 6; }
+.ccl-pos-4 { right: 3%; top: 258px; --depth: 0.85; --tilt: -4deg; --dur: 7.6s; --delay: 0.3s; z-index: 5; }
+.ccl-pos-5 { left: 0;   top: 432px; --depth: 1.05; --tilt: -5deg; --dur: 9s;   --delay: 0.8s; z-index: 6; }
+.ccl-pos-6 { right: 0;  top: 472px; --depth: 0.6;  --tilt: 5deg;  --dur: 8.2s; --delay: 1.3s; z-index: 5; }
+
+/* Card internals */
+.ccl-mh { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.ccl-badge {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+}
+.ccl-title { font-family: 'Bricolage Grotesque', 'Poppins', sans-serif; font-size: 14.5px; font-weight: 700; color: var(--ccl-ink); line-height: 1.15; }
+.ccl-open { margin-left: auto; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600; color: #0f766e; opacity: 0.85; }
+
+.ccl-big { font-family: 'Bricolage Grotesque', 'Poppins', sans-serif; font-size: 28px; font-weight: 800; color: var(--ccl-ink); line-height: 1; display: flex; align-items: baseline; gap: 8px; }
+.ccl-big small { font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 400; color: var(--ccl-ink-soft); }
+
+.ccl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 12px; }
+.ccl-chip { font-family: 'Poppins', sans-serif; font-size: 10.5px; font-weight: 500; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.ccl-chip-green { background: #dcfce7; color: #15803d; }
+.ccl-chip-amber { background: #fef3c7; color: #b45309; }
+.ccl-chip-red { background: #fee2e2; color: #b91c1c; }
+.ccl-chip-blue { background: #dbeafe; color: #1d4ed8; }
+
+.ccl-row { display: flex; gap: 22px; align-items: flex-end; }
+.ccl-row-tight { justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 4px; }
+.ccl-row small { font-family: 'Poppins', sans-serif; font-size: 11px; color: var(--ccl-ink-soft); }
+.ccl-stat b { font-family: 'Bricolage Grotesque', 'Poppins', sans-serif; font-size: 22px; font-weight: 800; color: var(--ccl-ink); display: block; line-height: 1.05; }
+.ccl-stat small { font-family: 'Poppins', sans-serif; font-size: 10.5px; color: var(--ccl-ink-soft); }
+.ccl-progval { font-family: 'Bricolage Grotesque', 'Poppins', sans-serif; font-size: 15px; font-weight: 800; color: var(--ccl-ink); }
+
+.ccl-trend { width: 100%; height: 30px; margin-top: auto; display: block; }
+.ccl-progress { width: 100%; height: 7px; border-radius: 999px; background: #e2e8f0; margin-top: 10px; overflow: hidden; }
+.ccl-progress > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #34d399, #10b981); }
+
+/* Keyframes */
+@keyframes ccl-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes ccl-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+/* Responsive: tap-friendly stacked grid, no 3D */
+@media (max-width: 900px) {
+  .ccl-root { justify-content: flex-start; }
+  .ccl-shell { grid-template-columns: 1fr; padding: 28px 18px; gap: 16px; min-height: 0; }
+  .ccl-copy { max-width: none; text-align: center; margin: 0 auto; }
+  .ccl-cue, .ccl-ext { margin-left: auto; margin-right: auto; }
+  .ccl-stage { min-height: 0; perspective: none; }
+  .ccl-cluster { width: 100%; max-width: 760px; height: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .ccl-mod { position: static; width: 100%; transform: none !important; }
+  .ccl-mod-flip { transform: rotateY(0deg); }
+  .ccl-mod:not(:disabled):hover .ccl-mod-flip { transform: rotateY(0deg) translateZ(0); }
+}
+
+/* Reduced motion: no float / parallax / tilt; flip handled in JS */
+@media (prefers-reduced-motion: reduce) {
+  .ccl-mod-float { animation: none !important; }
+  .ccl-mod, .ccl-mod-flip { transition: none !important; transform: none !important; }
+  .ccl-mod-flip { transform: rotateY(0deg) !important; }
+  .ccl-dots i { animation: none !important; }
+}
