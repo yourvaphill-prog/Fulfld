@@ -1,4 +1,5 @@
 import { groupBy } from './metricCalculator.js';
+import { buildAllAsinInsights } from './asinInsights.js';
 
 /**
  * Product Ad Readiness Scorer
@@ -243,13 +244,102 @@ function assignLabel(row, t) {
   };
 }
 
+// ── Data-sufficiency score cap ──────────────────────────────────────────────────
+/**
+ * Prevents the displayed score from implying more confidence than the data
+ * supports — e.g. a product with great early ACoS/ROAS but only 5 clicks
+ * should never show a scale-ready-looking score like 100.
+ *
+ * Returns null when the row has enough clicks, impressions, and orders to be
+ * fully trusted (which is always true for the 'scale' tier, since assignLabel's
+ * Priority 2 "Needs More Data" check already gates clicks/impressions before
+ * Priority 3 "Ready to Scale" gates orders).
+ *
+ * @returns {{ cap: number, note: string }|null}
+ */
+function computeDataSufficiencyCap(row, t) {
+  const clicks      = row.totalClicks      ?? 0;
+  const impressions = row.totalImpressions ?? 0;
+  const orders      = row.totalOrders      ?? 0;
+
+  if (clicks === 0) {
+    return {
+      cap:  25,
+      note: 'No clicks yet. Score capped until performance data is available.',
+    };
+  }
+  if (clicks < t.minClicks) {
+    return {
+      cap:  65,
+      note: `Strong early performance, but only ${n(clicks)} click${clicks !== 1 ? 's' : ''} (min ${n(t.minClicks)} needed). Score capped until more data is available.`,
+    };
+  }
+  if (impressions < t.minImpressions) {
+    return {
+      cap:  75,
+      note: `Good early signals, but only ${n(impressions)} impression${impressions !== 1 ? 's' : ''} (min ${n(t.minImpressions)} needed). Score capped until more data is available.`,
+    };
+  }
+  if (orders < t.minOrders) {
+    return {
+      cap:  75,
+      note: `Good early signals, but only ${n(orders)} order${orders !== 1 ? 's' : ''} (min ${n(t.minOrders)} needed). Score capped until more data is available.`,
+    };
+  }
+  return null;
+}
+
+// ── ASIN-level performance blend ────────────────────────────────────────────────
+/**
+ * Adjust the base score using ASIN-level keyword/target performance instead of
+ * relying only on the product's overall sales/spend.
+ *
+ * Rewards ASINs that have proven winning keywords / product targets; penalises
+ * ASINs burning a large share of their spend on terms with no sales.
+ * Bounded to roughly ±12 so it nudges — never dominates — the base score.
+ */
+function applyAsinPerformanceAdjustment(score, insights, row) {
+  if (!insights) return score;
+
+  let delta = 0;
+
+  // Reward proven demand at the keyword/target level.
+  const provenKeywords = insights.topKeywords.filter(w => w.tier === 1).length;
+  const provenTargets  = insights.topTargets.filter(w => w.tier === 1).length;
+  const anyWinners     = insights.winningKeywordsCount + insights.winningTargetsCount;
+
+  if (provenKeywords + provenTargets > 0)      delta += 8;
+  else if (anyWinners > 0)                     delta += 4;
+
+  // Penalise wasted spend as a share of the product's total ad spend.
+  const totalSpend = row.totalSpend ?? 0;
+  if (totalSpend > 0 && insights.spendWasted > 0) {
+    const wasteRatio = insights.spendWasted / totalSpend;
+    if (wasteRatio >= 0.6)      delta -= 8;
+    else if (wasteRatio >= 0.3) delta -= 4;
+  }
+
+  return Math.min(100, Math.max(0, score + delta));
+}
+
 // ── Main export ────────────────────────────────────────────────────────────────
 /**
- * Accepts raw product rows and thresholds.
+ * Accepts raw product rows, thresholds, and (optionally) search-term rows.
  * Returns a scored, labelled, sorted array — one entry per unique ASIN/SKU.
+ *
+ * When searchTerms are supplied, each product is enriched with ASIN-level
+ * insights (top winning keywords/targets, negative candidates, spend wasted,
+ * suggested action) and its score is blended with that keyword/target
+ * performance rather than relying on overall product sales/spend alone.
+ *
+ * @param {object[]} products
+ * @param {object}   thresholds
+ * @param {object[]} [searchTerms] - enriched search-term rows (optional)
  */
-export function buildReadinessPlan(products, thresholds) {
+export function buildReadinessPlan(products, thresholds, searchTerms = []) {
   if (!products.length) return [];
+
+  const insightsByAsin = buildAllAsinInsights(searchTerms, thresholds);
 
   // Group by ASIN first, then by SKU for rows without an ASIN
   const byAsin = groupBy(products, 'asin');
@@ -257,17 +347,39 @@ export function buildReadinessPlan(products, thresholds) {
   const aggregated = [...byAsin, ...bySku];
 
   const plan = aggregated.map(row => {
-    const score      = computeScore(row, thresholds);
+    const baseScore  = computeScore(row, thresholds);
     const { tier, reason, action } = assignLabel(row, thresholds);
     const meta       = READINESS_META[tier];
+
+    const insights = row.asin
+      ? (insightsByAsin.get(String(row.asin).toUpperCase()) ?? null)
+      : null;
+
+    const uncappedScore = applyAsinPerformanceAdjustment(baseScore, insights, row);
+
+    // Cap the displayed score when data is too thin to trust it, so a product
+    // can never look "ready to scale" while its label still says otherwise.
+    const dataCap    = computeDataSufficiencyCap(row, thresholds);
+    const scoreCapped = dataCap != null && uncappedScore > dataCap.cap;
+    const score       = scoreCapped ? dataCap.cap : uncappedScore;
+    const displayReason = scoreCapped ? `${reason} ${dataCap.note}` : reason;
 
     return {
       ...row,
       score,
+      baseScore,
+      uncappedScore,
+      scoreCapped,
       tier,
-      reason,
+      reason: displayReason,
       action,
       ...meta,
+      // ASIN-level rollups (null-safe defaults when no search-term data)
+      insights,
+      winningKeywordsCount: insights?.winningKeywordsCount ?? 0,
+      winningTargetsCount:  insights?.winningTargetsCount  ?? 0,
+      negativeCandidatesCount: insights?.negativeCount     ?? 0,
+      spendWasted:          insights?.spendWasted          ?? 0,
     };
   });
 
@@ -290,6 +402,12 @@ export function summariseReadiness(plan) {
     .reduce((s, r) => s + (r.totalSpend ?? 0), 0);
   const needsReviewCount = listingCount + offerCount;
 
+  // ASIN-level rollup totals (0 when no search-term data was supplied)
+  const winningKeywordsTotal   = plan.reduce((s, r) => s + (r.winningKeywordsCount ?? 0), 0);
+  const winningTargetsTotal    = plan.reduce((s, r) => s + (r.winningTargetsCount ?? 0), 0);
+  const negativeCandidateTotal = plan.reduce((s, r) => s + (r.negativeCandidatesCount ?? 0), 0);
+  const spendWastedTotal       = plan.reduce((s, r) => s + (r.spendWasted ?? 0), 0);
+
   return {
     total: plan.length,
     scaleCount,
@@ -300,5 +418,9 @@ export function summariseReadiness(plan) {
     needsDataCount,
     needsReviewCount,
     spendAtRisk,
+    winningKeywordsTotal,
+    winningTargetsTotal,
+    negativeCandidateTotal,
+    spendWastedTotal,
   };
 }

@@ -15,6 +15,11 @@ const COLUMN_MAP = {
   'Match Type': 'matchType',
   'Targeting': 'targeting',
   'Keyword': 'targeting',
+  // Product title (present in some Advertised Product / Search Term exports)
+  'Product Title': 'productTitle',
+  'Advertised Product Title': 'productTitle',
+  'Title': 'productTitle',
+  'Product Name': 'productTitle',
   // Spend & sales
   'Spend': 'spend',
   'Cost': 'spend',

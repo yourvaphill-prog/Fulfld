@@ -459,7 +459,7 @@ export default function PPCApp({ onSwitchModule }) {
             <div style={s.sectionSub}>
               0–100 readiness score per ASIN — identifies which products are ready to scale and which need attention first
             </div>
-            <ProductReadiness products={products} thresholds={thresholds} />
+            <ProductReadiness products={products} searchTerms={searchTerms} thresholds={thresholds} />
           </>
         );
 

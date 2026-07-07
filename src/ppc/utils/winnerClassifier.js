@@ -11,7 +11,21 @@
  *
  * 1-order terms are NEVER Tier 1 / High Priority Winner.
  * PROVEN_ORDER_COUNT (3) is the gate between Early Winner and High Priority Winner.
+ *
+ * ASIN-AWARENESS:
+ *   Winners are grouped primarily by Advertised ASIN + Customer Search Term, so the
+ *   same term winning on two different ASINs is NOT merged into one row. Each winner
+ *   carries its source ASIN/SKU (with a confidence flag) and a term type:
+ *     • keyword term → recommended move is "Manual Exact"
+ *     • ASIN term    → recommended move is "Manual Product Targeting" (never Exact)
  */
+
+import {
+  classifyTerm,
+  buildAsinInferenceMap,
+  resolveAdvertisedAsin,
+  UNKNOWN_ASIN,
+} from './asinUtils.js';
 
 export const PROVEN_ORDER_COUNT = 3;
 
@@ -52,8 +66,38 @@ function tierNote(row, tier) {
   }
 }
 
+// ── ASIN-aware label / action ──────────────────────────────────────────────────
+// The "move" destination depends on whether the customer search term is a keyword
+// (→ Manual Exact) or an ASIN product target (→ Manual Product Targeting).
+
+/** Human label for the move destination. */
+export function moveTargetFor(termType) {
+  return termType === 'asin' ? 'Manual Product Targeting' : 'Manual Exact';
+}
+
+function labelFor(tier, termType) {
+  if (termType === 'asin') {
+    if (tier === 1) return 'High Priority Target';
+    if (tier === 2) return 'Early Target Winner';
+    if (tier === 3) return 'Move to Product Targeting';
+  }
+  return TIER_LABELS[tier];
+}
+
+function actionFor(tier, termType) {
+  const target = moveTargetFor(termType);
+  switch (tier) {
+    case 1: return `Move to ${target} — increase bid carefully`;
+    case 2: return `Add to ${target} — conservative bid, monitor closely`;
+    case 3: return `Move to ${target}`;
+    case 4: return 'Increase Bid Carefully';
+    case 5: return 'Monitor – Borderline';
+    default: return '';
+  }
+}
+
 /**
- * Five-tier classification (first match wins).
+ * ASIN-aware winner classification (first match wins per tier).
  *
  *   Tier 1 — High Priority Winner  : orders >= PROVEN_ORDER_COUNT(3) AND acos <= targetACoS AND roas >= goodROASThreshold
  *   Tier 2 — Early Winner          : orders >= minOrders AND orders < PROVEN_ORDER_COUNT AND acos <= targetACoS AND roas >= goodROASThreshold
@@ -62,21 +106,22 @@ function tierNote(row, tier) {
  *   Tier 5 — Keep Monitoring       : orders > 0 AND acos > targetACoS × 1.5
  *
  * minOrders (Settings) gates entry to the list entirely.
- * PROVEN_ORDER_COUNT gates Tier 1 vs Tier 2:
- *   1–2 orders → "Early Winner" (Tier 2)
- *   3+ orders  → "High Priority Winner" (Tier 1)
- * Terms with orders === 0 are never included.
- * acos === 'NO_SALES' sentinel is skipped.
- * Deduplication by (term + campaign) fingerprint.
+ * Terms with orders === 0 are never included. acos === 'NO_SALES' is skipped.
+ * Deduplication key is (advertisedAsin + term + campaign) so the same term winning
+ * on different ASINs is preserved as separate rows.
  *
  * @param {object[]} searchTerms  - enriched search term rows
  * @param {object}   thresholds   - { targetACoS, goodROASThreshold, minOrders, ... }
- * @returns {object[]} sorted winner rows with tier, label, action, note fields added
+ * @returns {object[]} sorted winner rows with tier, label, action, note, termType,
+ *                     asin, advertisedSku, productTitle, asinConfidence, moveTarget
  */
 export function buildWinners(searchTerms, thresholds) {
   const t    = thresholds;
   const seen = new Set();
   const out  = [];
+
+  // Reliable campaign/ad-group → ASIN inference for rows missing an explicit ASIN.
+  const inferenceMap = buildAsinInferenceMap(searchTerms);
 
   for (const row of searchTerms) {
     const term = (row.searchTerm ?? row.targeting ?? '').trim();
@@ -90,7 +135,10 @@ export function buildWinners(searchTerms, thresholds) {
     const roas   = typeof row.roas === 'number' ? row.roas : null;
     const orders = row.orders ?? 0;
 
-    const fp = `${term.toLowerCase()}::${(row.campaignName ?? '').toLowerCase()}`;
+    const { asin, sku, confidence } = resolveAdvertisedAsin(row, inferenceMap);
+    const asinKey = (asin ?? 'unknown').toLowerCase();
+
+    const fp = `${asinKey}::${term.toLowerCase()}::${(row.campaignName ?? '').toLowerCase()}`;
     if (seen.has(fp)) continue;
     seen.add(fp);
 
@@ -127,12 +175,24 @@ export function buildWinners(searchTerms, thresholds) {
       continue;
     }
 
+    const termType = classifyTerm(term);
+
     out.push({
       ...row,
-      fingerprint: fp,
+      fingerprint:    fp,
       tier,
-      label:  TIER_LABELS[tier],
-      action: TIER_ACTIONS[tier],
+      termType,
+      moveTarget:     moveTargetFor(termType),
+      // Source ASIN / SKU / title (resolved, with confidence)
+      asin:           asin ?? row.asin ?? null,
+      advertisedAsin: asin,
+      advertisedSku:  sku,
+      asinDisplay:    asin ?? UNKNOWN_ASIN,
+      asinConfidence: confidence,
+      productTitle:   row.productTitle ?? null,
+      // ASIN-aware label + action override the keyword-centric defaults
+      label:  labelFor(tier, termType),
+      action: actionFor(tier, termType),
       note:   tierNote(row, tier),
     });
   }

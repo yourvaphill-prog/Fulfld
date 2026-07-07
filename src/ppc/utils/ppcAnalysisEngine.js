@@ -101,8 +101,8 @@ export function runAnalysis({ campaignRows = [], searchTermRows = [], productRow
   const plan    = buildScalingPlan(campaigns, t);
   const planSum = summarisePlan(plan);
 
-  // Product readiness
-  const readiness = buildReadinessPlan(products, t);
+  // Product readiness — ASIN-aware (blends search-term keyword/target performance)
+  const readiness = buildReadinessPlan(products, t, searchTerms);
   const rdSum     = summariseReadiness(readiness);
 
   // Winner classification (search term rows)

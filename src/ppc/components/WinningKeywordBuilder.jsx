@@ -3,68 +3,26 @@ import { Download, X, RotateCcw } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
 import { T } from '../theme.js';
 import { buildWinners } from '../utils/winnerClassifier.js';
+import { CONFIDENCE_META } from '../utils/asinUtils.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ppc_winners_excluded';
 
-const TIER_CONFIG = {
-  // Tier 1 — Proven Winner: 3+ orders, good ACoS, strong ROAS
-  1: {
-    label:  'High Priority Winner',
-    action: 'Move to Exact Match — increase bid carefully',
-    color:  '#22c55e',
-    bg:     '#22c55e11',
-    border: '#22c55e33',
-    reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)}, ROAS ${fmtRoas(r.roas)} — proven winner, exceeds all targets`,
-  },
-  // Tier 2 — Early Winner: 1–2 orders, good ACoS, strong ROAS (promising but limited data)
-  2: {
-    label:  'Early Winner',
-    action: 'Add to Exact Match — conservative bid, monitor closely',
-    color:  T.color.cyan,
-    bg:     'rgba(6,182,212,0.10)',
-    border: 'rgba(6,182,212,0.30)',
-    reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)}, ROAS ${fmtRoas(r.roas)} — promising early signal, needs more data`,
-  },
-  // Tier 3 — Test Exact Match: good ACoS but ROAS didn't reach strong threshold
-  3: {
-    label:  'Move to Exact Match',
-    action: 'Test Exact Match',
-    color:  T.color.cyan,
-    bg:     'rgba(6,182,212,0.05)',
-    border: 'rgba(6,182,212,0.18)',
-    reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — below target ACoS, isolate in Exact Match`,
-  },
-  // Tier 4 — Increase Bid: slightly above ACoS target but still ROAS-positive
-  4: {
-    label:  'Increase Bid',
-    action: 'Increase Bid Carefully',
-    color:  '#f97316',
-    bg:     '#f9731611',
-    border: '#f9731633',
-    reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — slightly above target but ROAS ≥ 1; increase bid carefully`,
-  },
-  // Tier 5 — Keep Monitoring: converting but well above ACoS target
-  5: {
-    label:  'Keep Monitoring',
-    action: 'Monitor – Borderline',
-    color:  '#eab308',
-    bg:     '#eab30811',
-    border: '#eab30833',
-    reason: (r, t) =>
-      `${r.orders} order${r.orders !== 1 ? 's' : ''}, ACoS ${fmtPct(r.acos)} — converting but above target; monitor trend`,
-  },
+// Per-tier colours only — label/action/reason text now come from each winner row
+// (ASIN-aware) via winnerClassifier.js.
+const TIER_COLORS = {
+  1: { color: '#22c55e',      bg: '#22c55e11',            border: '#22c55e33' },
+  2: { color: T.color.cyan,   bg: 'rgba(6,182,212,0.10)', border: 'rgba(6,182,212,0.30)' },
+  3: { color: T.color.cyan,   bg: 'rgba(6,182,212,0.05)', border: 'rgba(6,182,212,0.18)' },
+  4: { color: '#f97316',      bg: '#f9731611',            border: '#f9731633' },
+  5: { color: '#eab308',      bg: '#eab30811',            border: '#eab30833' },
 };
 
 const FILTER_TABS = [
   { key: 'all',      label: 'All' },
   { key: '1',        label: 'High Priority' },
   { key: '2',        label: 'Early Winner' },
-  { key: '3',        label: 'Exact Match' },
+  { key: '3',        label: 'Exact / Target' },
   { key: '4',        label: 'Increase Bid' },
   { key: '5',        label: 'Monitor' },
   { key: 'excluded', label: 'Excluded' },
@@ -91,26 +49,31 @@ function exportCSV(rows) {
   if (!rows.length) return;
 
   const headers = [
-    'Campaign', 'Ad Group', 'Search Term', 'Current Match Type',
-    'Suggested Action', 'Reason', 'Spend', 'Sales', 'Orders',
-    'ACoS (%)', 'ROAS', 'Conv Rate (%)',
+    'Source ASIN', 'Source SKU', 'Product Title', 'ASIN Confidence',
+    'Campaign', 'Ad Group', 'Customer Search Term', 'Term Type',
+    'Current Match Type', 'Suggested Action', 'Reason',
+    'Spend', 'Sales', 'Orders', 'ACoS (%)', 'ROAS', 'Conv Rate (%)',
   ];
 
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
   const lines = rows.map(r => {
-    const cfg    = TIER_CONFIG[r.tier];
     const acosPct = typeof r.acos === 'number' ? (r.acos * 100).toFixed(1) : '';
     const roasVal = typeof r.roas === 'number'  ? r.roas.toFixed(2)        : '';
     const cvrPct  = typeof r.cvr  === 'number'  ? (r.cvr  * 100).toFixed(1) : '';
 
     return [
+      esc(r.asinDisplay   ?? r.asin ?? ''),
+      esc(r.advertisedSku ?? r.sku  ?? ''),
+      esc(r.productTitle  ?? ''),
+      esc(CONFIDENCE_META[r.asinConfidence]?.label ?? ''),
       esc(r.campaignName ?? ''),
       esc(r.adGroupName  ?? ''),
       esc(r.searchTerm   ?? r.targeting ?? ''),
+      esc(r.termType === 'asin' ? 'ASIN (product target)' : 'Keyword'),
       esc(r.matchType    ?? ''),
-      esc(cfg.action),
-      esc(cfg.reason(r, {})),
+      esc(r.action ?? ''),
+      esc(r.note   ?? ''),
       esc((r.spend  ?? 0).toFixed(2)),
       esc((r.sales  ?? 0).toFixed(2)),
       esc(r.orders  ?? 0),
@@ -142,6 +105,15 @@ const s = {
   summaryLabel: { color: T.color.dim, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono },
   summaryValue: { color: T.color.white, fontSize: 20, fontWeight: 700, marginTop: 2, fontFamily: T.font.heading },
   filterRow: { display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
+  // Secondary row of dropdown facets (ASIN / SKU / Campaign / Ad Group / Term type)
+  facetRow: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' },
+  facetGroup: { display: 'flex', flexDirection: 'column', gap: 3 },
+  facetLabel: { color: T.color.dim, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: T.font.mono },
+  select: {
+    background: T.bg.input, border: `1px solid ${T.border.input}`, borderRadius: T.radius.sm,
+    color: T.color.muted, padding: '5px 8px', fontSize: 12, outline: 'none', minWidth: 130,
+    fontFamily: T.font.mono, colorScheme: 'dark',
+  },
   filterBtn: {
     padding: '5px 12px', borderRadius: T.radius.sm, border: `1px solid ${T.border.subtle}`,
     background: 'transparent', color: T.color.dim, cursor: 'pointer', fontSize: 12, fontWeight: 600,
@@ -168,7 +140,7 @@ const s = {
   th: {
     textAlign: 'left', color: T.color.dim, fontSize: 11, fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}`,
+    padding: '8px 10px', borderBottom: `1px solid ${T.border.subtle}`, whiteSpace: 'nowrap',
     background: T.bg.panel, fontFamily: T.font.mono,
   },
   td: {
@@ -178,6 +150,10 @@ const s = {
   tierBadge: {
     display: 'inline-block', padding: '2px 8px', borderRadius: T.radius.sm,
     fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap', fontFamily: T.font.mono,
+  },
+  chip: {
+    display: 'inline-block', padding: '1px 6px', borderRadius: T.radius.sm,
+    fontSize: 9, fontWeight: 700, whiteSpace: 'nowrap', fontFamily: T.font.mono, letterSpacing: '0.03em',
   },
   actionBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
@@ -194,11 +170,32 @@ const s = {
   },
 };
 
+// Term-type chip colours
+const TERM_TYPE_META = {
+  keyword: { label: 'KEYWORD', color: T.color.cyan, bg: 'rgba(6,182,212,0.10)', border: 'rgba(6,182,212,0.30)' },
+  asin:    { label: 'ASIN TGT', color: '#a855f7',   bg: '#a855f711',           border: '#a855f733' },
+};
+
+// Build a sorted, de-duplicated option list from a field.
+function optionsFor(rows, getter) {
+  const set = new Set();
+  for (const r of rows) {
+    const v = getter(r);
+    if (v) set.add(v);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
   const [excluded,    setExcluded]    = useState(() => loadExcluded());
   const [filterTier,  setFilterTier]  = useState('all');
   const [query,       setQuery]       = useState('');
+  const [fAsin,       setFAsin]       = useState('all');
+  const [fSku,        setFSku]        = useState('all');
+  const [fCampaign,   setFCampaign]   = useState('all');
+  const [fAdGroup,    setFAdGroup]    = useState('all');
+  const [fTermType,   setFTermType]   = useState('all');
 
   // Build candidates fresh from props (re-runs when searchTerms or thresholds change)
   const candidates = useMemo(
@@ -210,30 +207,47 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
   const active   = useMemo(() => candidates.filter(r => !excluded.has(r.fingerprint)), [candidates, excluded]);
   const excluded_ = useMemo(() => candidates.filter(r =>  excluded.has(r.fingerprint)), [candidates, excluded]);
 
+  // Facet options (from active set)
+  const asinOptions     = useMemo(() => optionsFor(active, r => r.asinDisplay ?? r.asin), [active]);
+  const skuOptions      = useMemo(() => optionsFor(active, r => r.advertisedSku ?? r.sku), [active]);
+  const campaignOptions = useMemo(() => optionsFor(active, r => r.campaignName), [active]);
+  const adGroupOptions  = useMemo(() => optionsFor(active, r => r.adGroupName), [active]);
+
   // Summary stats (active only)
   const summaryStats = useMemo(() => {
     if (!active.length) return null;
-    const totalSales  = active.reduce((s, r) => s + (r.sales  ?? 0), 0);
-    const totalOrders = active.reduce((s, r) => s + (r.orders ?? 0), 0);
-    const totalSpend  = active.reduce((s, r) => s + (r.spend  ?? 0), 0);
-    const avgAcos     = totalSales  > 0 ? totalSpend / totalSales : null;
-    const avgRoas     = totalSpend  > 0 ? totalSales / totalSpend : null;
-    return { total: active.length, totalSales, totalOrders, avgAcos, avgRoas };
+    const totalSales   = active.reduce((s, r) => s + (r.sales  ?? 0), 0);
+    const totalOrders  = active.reduce((s, r) => s + (r.orders ?? 0), 0);
+    const totalSpend   = active.reduce((s, r) => s + (r.spend  ?? 0), 0);
+    const keywordWins  = active.filter(r => r.termType === 'keyword').length;
+    const targetWins   = active.filter(r => r.termType === 'asin').length;
+    const avgAcos      = totalSales  > 0 ? totalSpend / totalSales : null;
+    const avgRoas      = totalSpend  > 0 ? totalSales / totalSpend : null;
+    return { total: active.length, totalSales, totalOrders, avgAcos, avgRoas, keywordWins, targetWins };
   }, [active]);
 
   // Filtered rows for table display
   const displayRows = useMemo(() => {
     const source = filterTier === 'excluded' ? excluded_ : active;
-    const byTier = filterTier === 'all' || filterTier === 'excluded'
+    let rows = filterTier === 'all' || filterTier === 'excluded'
       ? source
       : source.filter(r => String(r.tier) === filterTier);
-    if (!query.trim()) return byTier;
+
+    if (fAsin     !== 'all') rows = rows.filter(r => (r.asinDisplay ?? r.asin) === fAsin);
+    if (fSku      !== 'all') rows = rows.filter(r => (r.advertisedSku ?? r.sku) === fSku);
+    if (fCampaign !== 'all') rows = rows.filter(r => r.campaignName === fCampaign);
+    if (fAdGroup  !== 'all') rows = rows.filter(r => r.adGroupName === fAdGroup);
+    if (fTermType !== 'all') rows = rows.filter(r => r.termType === fTermType);
+
+    if (!query.trim()) return rows;
     const q = query.toLowerCase();
-    return byTier.filter(r =>
+    return rows.filter(r =>
       (r.searchTerm  ?? r.targeting   ?? '').toLowerCase().includes(q) ||
-      (r.campaignName ?? '').toLowerCase().includes(q)
+      (r.campaignName ?? '').toLowerCase().includes(q) ||
+      (r.asinDisplay  ?? r.asin ?? '').toLowerCase().includes(q) ||
+      (r.productTitle ?? '').toLowerCase().includes(q)
     );
-  }, [active, excluded_, filterTier, query]);
+  }, [active, excluded_, filterTier, query, fAsin, fSku, fCampaign, fAdGroup, fTermType]);
 
   function handleExclude(fp) {
     setExcluded(prev => {
@@ -284,6 +298,16 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
     );
   }
 
+  const facet = (label, value, setter, options) => (
+    <div style={s.facetGroup}>
+      <span style={s.facetLabel}>{label}</span>
+      <select style={s.select} value={value} onChange={e => setter(e.target.value)}>
+        <option value="all">All</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+
   return (
     <div>
       {/* ── Summary bar ── */}
@@ -294,12 +318,16 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
             <div style={s.summaryValue}>{summaryStats.total}</div>
           </div>
           <div style={s.summaryCard}>
-            <div style={s.summaryLabel}>Total Sales</div>
-            <div style={{ ...s.summaryValue, color: '#22c55e' }}>{fmtCurrency(summaryStats.totalSales)}</div>
+            <div style={s.summaryLabel}>Keyword Winners</div>
+            <div style={{ ...s.summaryValue, color: T.color.cyan }}>{summaryStats.keywordWins}</div>
           </div>
           <div style={s.summaryCard}>
-            <div style={s.summaryLabel}>Total Orders</div>
-            <div style={s.summaryValue}>{fmtNum(summaryStats.totalOrders)}</div>
+            <div style={s.summaryLabel}>Target Winners</div>
+            <div style={{ ...s.summaryValue, color: '#a855f7' }}>{summaryStats.targetWins}</div>
+          </div>
+          <div style={s.summaryCard}>
+            <div style={s.summaryLabel}>Total Sales</div>
+            <div style={{ ...s.summaryValue, color: '#22c55e' }}>{fmtCurrency(summaryStats.totalSales)}</div>
           </div>
           <div style={s.summaryCard}>
             <div style={s.summaryLabel}>Avg ACoS</div>
@@ -322,7 +350,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
         </div>
       )}
 
-      {/* ── Filter row ── */}
+      {/* ── Tier filter row ── */}
       <div style={s.filterRow}>
         {FILTER_TABS.map(tab => {
           const active_ = filterTier === tab.key;
@@ -331,8 +359,8 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
           if (tab.key === 'excluded') count = excluded_.length;
           if (['1','2','3','4','5'].includes(tab.key)) count = tierCounts[Number(tab.key)] ?? 0;
 
-          const cfg = tab.key !== 'all' && tab.key !== 'excluded' ? TIER_CONFIG[Number(tab.key)] : null;
-          const activeColor = cfg ? cfg.color : tab.key === 'excluded' ? T.color.dim : T.color.cyan;
+          const tc = tab.key !== 'all' && tab.key !== 'excluded' ? TIER_COLORS[Number(tab.key)] : null;
+          const activeColor = tc ? tc.color : tab.key === 'excluded' ? T.color.dim : T.color.cyan;
 
           return (
             <button
@@ -341,7 +369,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
                 ...s.filterBtn,
                 color:       active_ ? activeColor : '#666',
                 borderColor: active_ ? activeColor + '55' : '#1e1e1e',
-                background:  active_ ? (cfg ? cfg.bg : tab.key === 'excluded' ? `${T.color.dim}11` : 'rgba(6,182,212,0.08)') : 'transparent',
+                background:  active_ ? (tc ? tc.bg : tab.key === 'excluded' ? `${T.color.dim}11` : 'rgba(6,182,212,0.08)') : 'transparent',
               }}
               onClick={() => setFilterTier(tab.key)}
             >
@@ -362,7 +390,7 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
         <input
           style={s.searchBox}
           type="text"
-          placeholder="Filter by term or campaign…"
+          placeholder="Filter by term, ASIN, campaign…"
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
@@ -378,146 +406,201 @@ export default function WinningKeywordBuilder({ searchTerms, thresholds }) {
         </button>
       </div>
 
+      {/* ── Facet filter row (ASIN / SKU / Campaign / Ad Group / Term type) ── */}
+      <div style={s.facetRow}>
+        {facet('Advertised ASIN', fAsin, setFAsin, asinOptions)}
+        {facet('SKU', fSku, setFSku, skuOptions)}
+        {facet('Campaign', fCampaign, setFCampaign, campaignOptions)}
+        {facet('Ad Group', fAdGroup, setFAdGroup, adGroupOptions)}
+        <div style={s.facetGroup}>
+          <span style={s.facetLabel}>Term Type</span>
+          <select style={s.select} value={fTermType} onChange={e => setFTermType(e.target.value)}>
+            <option value="all">All</option>
+            <option value="keyword">Keyword</option>
+            <option value="asin">ASIN (product target)</option>
+          </select>
+        </div>
+        {(fAsin !== 'all' || fSku !== 'all' || fCampaign !== 'all' || fAdGroup !== 'all' || fTermType !== 'all') && (
+          <button
+            style={{ ...s.filterBtn, alignSelf: 'flex-end', color: T.color.dim }}
+            onClick={() => { setFAsin('all'); setFSku('all'); setFCampaign('all'); setFAdGroup('all'); setFTermType('all'); }}
+          >
+            Clear facets
+          </button>
+        )}
+      </div>
+
       {/* ── Table ── */}
       {displayRows.length === 0 ? (
         <div style={{ ...s.emptyState, padding: '40px 20px' }}>
           <div style={{ color: T.color.dim }}>No terms match this filter</div>
         </div>
       ) : (
-        <table style={s.table}>
-          <thead>
-            <tr>
-              <th style={s.th}>Search Term</th>
-              <th style={s.th}>Campaign / Ad Group</th>
-              <th style={s.th}>Match</th>
-              <th style={{ ...s.th, textAlign: 'right' }}>Spend</th>
-              <th style={{ ...s.th, textAlign: 'right' }}>Sales</th>
-              <th style={{ ...s.th, textAlign: 'right' }}>Orders</th>
-              <th style={{ ...s.th, textAlign: 'right' }}>ACoS</th>
-              <th style={{ ...s.th, textAlign: 'right' }}>ROAS</th>
-              <th style={s.th}>Suggested Action</th>
-              <th style={{ ...s.th, width: 40 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayRows.map((row, i) => {
-              const cfg = TIER_CONFIG[row.tier];
-              const isExcluded = excluded.has(row.fingerprint);
+        <div style={{ overflowX: 'auto' }}>
+          <table style={s.table}>
+            <thead>
+              <tr>
+                <th style={{ ...s.th, minWidth: 220 }}>Customer Search Term</th>
+                <th style={{ ...s.th, minWidth: 130 }}>Source ASIN / SKU</th>
+                <th style={{ ...s.th, minWidth: 160 }}>Product Title</th>
+                <th style={s.th}>Campaign / Ad Group</th>
+                <th style={s.th}>Match</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>Spend</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>Sales</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>Orders</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>ACoS</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>ROAS</th>
+                <th style={{ ...s.th, minWidth: 200 }}>Suggested Action</th>
+                <th style={{ ...s.th, width: 40 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayRows.map((row, i) => {
+                const tc = TIER_COLORS[row.tier];
+                const isExcluded = excluded.has(row.fingerprint);
+                const tt = TERM_TYPE_META[row.termType] ?? TERM_TYPE_META.keyword;
+                const conf = CONFIDENCE_META[row.asinConfidence];
+                const showConf = row.asinConfidence && row.asinConfidence !== 'exact';
 
-              return (
-                <tr
-                  key={row.fingerprint + i}
-                  style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', opacity: isExcluded ? 0.45 : 1 }}
-                >
-                  {/* Search term + reason */}
-                  <td style={s.td}>
-                    <div style={{ color: T.color.white, fontWeight: 600, fontSize: 12, marginBottom: 3 }}>
-                      {row.searchTerm ?? row.targeting ?? '—'}
-                    </div>
-                    <div style={{ color: T.color.dim, fontSize: 11 }}>
-                      {cfg.reason(row, thresholds)}
-                    </div>
-                    <span style={{
-                      ...s.tierBadge,
-                      marginTop: 4,
-                      background: cfg.bg,
-                      color: cfg.color,
-                      border: `1px solid ${cfg.border}`,
+                return (
+                  <tr
+                    key={row.fingerprint + i}
+                    style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', opacity: isExcluded ? 0.45 : 1 }}
+                  >
+                    {/* Search term + reason + tier/term-type chips */}
+                    <td style={s.td}>
+                      <div style={{ color: T.color.white, fontWeight: 600, fontSize: 12, marginBottom: 3, wordBreak: 'break-word' }}>
+                        {row.searchTerm ?? row.targeting ?? '—'}
+                      </div>
+                      <div style={{ color: T.color.dim, fontSize: 11, marginBottom: 4 }}>
+                        {row.note}
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        <span style={{ ...s.tierBadge, background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>
+                          {row.label}
+                        </span>
+                        <span style={{ ...s.chip, background: tt.bg, color: tt.color, border: `1px solid ${tt.border}` }}>
+                          {tt.label}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Source ASIN / SKU + confidence */}
+                    <td style={{ ...s.td, fontSize: 11 }}>
+                      <div style={{
+                        color: row.asinConfidence === 'unknown' ? T.color.dim : T.color.white,
+                        fontWeight: 600,
+                      }}>
+                        {row.asinDisplay ?? row.asin ?? '—'}
+                      </div>
+                      {(row.advertisedSku ?? row.sku) && (
+                        <div style={{ color: T.color.dim, fontSize: 10, marginTop: 2 }}>{row.advertisedSku ?? row.sku}</div>
+                      )}
+                      {showConf && conf && (
+                        <span style={{ ...s.chip, marginTop: 3, background: conf.bg, color: conf.color, border: `1px solid ${conf.border}` }}>
+                          {conf.label}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Product title */}
+                    <td style={{ ...s.td, color: T.color.dim, fontSize: 11, whiteSpace: 'normal', maxWidth: 200 }}>
+                      {row.productTitle ?? '—'}
+                    </td>
+
+                    {/* Campaign / ad group */}
+                    <td style={s.td}>
+                      <div style={{ color: T.color.dim, fontSize: 12 }}>{row.campaignName ?? '—'}</div>
+                      {row.adGroupName && (
+                        <div style={{ color: T.color.dim, fontSize: 11, marginTop: 2 }}>{row.adGroupName}</div>
+                      )}
+                    </td>
+
+                    {/* Match type */}
+                    <td style={{ ...s.td, color: '#888', fontSize: 11 }}>
+                      {row.matchType ?? '—'}
+                    </td>
+
+                    {/* Spend */}
+                    <td style={{ ...s.td, textAlign: 'right' }}>
+                      {fmtCurrency(row.spend)}
+                    </td>
+
+                    {/* Sales */}
+                    <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
+                      {fmtCurrency(row.sales)}
+                    </td>
+
+                    {/* Orders */}
+                    <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
+                      {fmtNum(row.orders)}
+                    </td>
+
+                    {/* ACoS */}
+                    <td style={{
+                      ...s.td, textAlign: 'right', fontWeight: 600,
+                      color: typeof row.acos === 'number' && row.acos <= thresholds.targetACoS
+                        ? T.color.green : T.color.orange,
                     }}>
-                      {cfg.label}
-                    </span>
-                  </td>
+                      {row.acos === 'NO_SALES' ? '—' : fmtPct(row.acos)}
+                    </td>
 
-                  {/* Campaign / ad group */}
-                  <td style={s.td}>
-                    <div style={{ color: T.color.dim, fontSize: 12 }}>{row.campaignName ?? '—'}</div>
-                    {row.adGroupName && (
-                      <div style={{ color: T.color.dim, fontSize: 11, marginTop: 2 }}>{row.adGroupName}</div>
-                    )}
-                  </td>
+                    {/* ROAS */}
+                    <td style={{ ...s.td, textAlign: 'right' }}>
+                      {fmtRoas(row.roas)}
+                    </td>
 
-                  {/* Match type */}
-                  <td style={{ ...s.td, color: '#888', fontSize: 11 }}>
-                    {row.matchType ?? '—'}
-                  </td>
+                    {/* Suggested action badge */}
+                    <td style={s.td}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '3px 8px', borderRadius: 4,
+                        fontSize: 11, fontWeight: 600,
+                        background: tc.bg, color: tc.color,
+                        border: `1px solid ${tc.border}`,
+                        whiteSpace: 'normal',
+                      }}>
+                        {row.action}
+                      </span>
+                    </td>
 
-                  {/* Spend */}
-                  <td style={{ ...s.td, textAlign: 'right' }}>
-                    {fmtCurrency(row.spend)}
-                  </td>
-
-                  {/* Sales */}
-                  <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
-                    {fmtCurrency(row.sales)}
-                  </td>
-
-                  {/* Orders */}
-                  <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
-                    {fmtNum(row.orders)}
-                  </td>
-
-                  {/* ACoS */}
-                  <td style={{
-                    ...s.td, textAlign: 'right', fontWeight: 600,
-                    color: typeof row.acos === 'number' && row.acos <= thresholds.targetACoS
-                      ? T.color.green : T.color.orange,
-                  }}>
-                    {row.acos === 'NO_SALES' ? '—' : fmtPct(row.acos)}
-                  </td>
-
-                  {/* ROAS */}
-                  <td style={{ ...s.td, textAlign: 'right' }}>
-                    {fmtRoas(row.roas)}
-                  </td>
-
-                  {/* Suggested action badge */}
-                  <td style={s.td}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '3px 8px', borderRadius: 4,
-                      fontSize: 11, fontWeight: 600,
-                      background: cfg.bg, color: cfg.color,
-                      border: `1px solid ${cfg.border}`,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {cfg.action}
-                    </span>
-                  </td>
-
-                  {/* Exclude / Restore button */}
-                  <td style={{ ...s.td, textAlign: 'center' }}>
-                    {isExcluded ? (
-                      <button
-                        style={{ ...s.actionBtn, color: T.color.dim }}
-                        title="Restore to active list"
-                        onClick={() => handleRestore(row.fingerprint)}
-                      >
-                        <RotateCcw size={13} />
-                      </button>
-                    ) : (
-                      <button
-                        style={{ ...s.actionBtn, color: T.color.dim }}
-                        title="Exclude from list"
-                        onClick={() => handleExclude(row.fingerprint)}
-                        onMouseEnter={e => e.currentTarget.style.color = T.color.red}
-                        onMouseLeave={e => e.currentTarget.style.color = T.color.dim}
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    {/* Exclude / Restore button */}
+                    <td style={{ ...s.td, textAlign: 'center' }}>
+                      {isExcluded ? (
+                        <button
+                          style={{ ...s.actionBtn, color: T.color.dim }}
+                          title="Restore to active list"
+                          onClick={() => handleRestore(row.fingerprint)}
+                        >
+                          <RotateCcw size={13} />
+                        </button>
+                      ) : (
+                        <button
+                          style={{ ...s.actionBtn, color: T.color.dim }}
+                          title="Exclude from list"
+                          onClick={() => handleExclude(row.fingerprint)}
+                          onMouseEnter={e => e.currentTarget.style.color = T.color.red}
+                          onMouseLeave={e => e.currentTarget.style.color = T.color.dim}
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* ── Usage note ── */}
       {active.length > 0 && filterTier !== 'excluded' && (
         <div style={s.note}>
-          Use this list to seed a new Exact Match campaign or promote high performers in your existing structure.
-          Export CSV includes the Suggested Action column for each term.
+          Winners are grouped by Advertised ASIN + Customer Search Term — the same term can appear for
+          multiple ASINs. Keyword terms recommend <strong>Manual Exact</strong>; ASIN terms recommend{' '}
+          <strong>Manual Product Targeting</strong>. Rows tagged <em>Inferred</em> or <em>Unknown ASIN</em> had
+          no advertised ASIN in the report — verify before acting. Export CSV includes source ASIN/SKU and the suggested action.
         </div>
       )}
     </div>

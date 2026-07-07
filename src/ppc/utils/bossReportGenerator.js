@@ -164,7 +164,7 @@ function sectionWhatIsWorking(plan, readiness, winners) {
   lines.push('');
 
   // Top winners
-  const highPriorityWinners = winners.filter(w => w.tier === 'scale_strong').slice(0, 3);
+  const highPriorityWinners = winners.filter(w => w.tier === 1).slice(0, 3);
   if (highPriorityWinners.length) {
     lines.push('  Top Winning Search Terms:');
     highPriorityWinners.forEach(w => {
@@ -343,8 +343,8 @@ function sectionKeywordSummary(searchTerms, thresholds, winners) {
   lines.push('');
 
   // Winners
-  const highPriority = winners.filter(w => w.tier === 'scale_strong');
-  const moderate     = winners.filter(w => w.tier === 'scale_moderate');
+  const highPriority = winners.filter(w => w.tier === 1);
+  const moderate     = winners.filter(w => w.tier === 2);
   lines.push(`  Winning Keywords:`);
   lines.push(`    High-priority Exact Match candidates: ${highPriority.length}`);
   lines.push(`    Moderate-priority candidates:         ${moderate.length}`);
@@ -544,7 +544,7 @@ export function generateBossReport({
     ((r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
   ).length;
 
-  const highPriorityWinners = winners.filter(w => w.tier === 'scale_strong').length;
+  const highPriorityWinners = winners.filter(w => w.tier === 1).length;
 
   // Account health
   const accountScore = calcAccountHealth(summary, thresholds, plan, readiness);

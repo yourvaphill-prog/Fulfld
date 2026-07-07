@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Download, Copy, CheckCircle } from 'lucide-react';
+import { Download, Copy, CheckCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { fmtCurrency, fmtPct, fmtNum, fmtRoas } from '../utils/metricCalculator.js';
 import { buildReadinessPlan, summariseReadiness, READINESS_META } from '../utils/adReadinessScore.js';
 import { T } from '../theme.js';
@@ -22,6 +22,7 @@ function exportCSV(rows) {
   const headers = [
     'ASIN', 'SKU', 'Spend', 'Sales', 'Orders', 'Clicks', 'Impressions',
     'ACoS (%)', 'ROAS', 'CVR (%)', 'Readiness Score', 'Readiness Label',
+    'Winning Keywords', 'Winning Product Targets', 'Negative Candidates', 'Spend at Risk',
     'Reason', 'Recommended Action',
   ];
 
@@ -44,6 +45,10 @@ function exportCSV(rows) {
       esc(cvrPct),
       esc(r.score            ?? ''),
       esc(r.label            ?? ''),
+      esc(r.winningKeywordsCount    ?? 0),
+      esc(r.winningTargetsCount     ?? 0),
+      esc(r.negativeCandidatesCount ?? 0),
+      esc((r.spendWasted     ?? 0).toFixed(2)),
       esc(r.reason           ?? ''),
       esc(r.action           ?? ''),
     ].join(',');
@@ -99,7 +104,8 @@ function buildSummaryText(plan, stats) {
     lines.push('', g.heading);
     for (const r of rows) {
       const id = r.asin ?? r.sku ?? '—';
-      lines.push(`• ${id} — ${r.reason} → ${r.action}`);
+      const counts = `[${r.winningKeywordsCount ?? 0} kw · ${r.winningTargetsCount ?? 0} tgt · ${r.negativeCandidatesCount ?? 0} neg]`;
+      lines.push(`• ${id} ${counts} — ${r.reason} → ${r.action}`);
     }
   }
 
@@ -140,7 +146,29 @@ const s = {
     padding: '11px 10px', borderBottom: `1px solid ${T.border.subtle}`,
     color: T.color.muted, fontSize: 12, verticalAlign: 'top', fontFamily: T.font.mono,
   },
+  countPill: {
+    display: 'inline-block', minWidth: 20, textAlign: 'center', padding: '1px 7px',
+    borderRadius: T.radius.pill, fontSize: 11, fontWeight: 700, fontFamily: T.font.mono,
+  },
   emptyState: { textAlign: 'center', padding: '60px 20px', color: T.color.dim, fontSize: 13, fontFamily: T.font.mono },
+  // Drawer
+  drawer: { background: 'rgba(255,255,255,0.02)', padding: '16px 18px' },
+  drawerGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 },
+  drawerCard: {
+    ...T.glass.card, borderRadius: T.radius.sm, padding: '12px 14px',
+  },
+  drawerTitle: {
+    color: T.color.white, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+    letterSpacing: '0.05em', fontFamily: T.font.mono, marginBottom: 8, display: 'flex',
+    alignItems: 'center', gap: 6,
+  },
+  drawerRow: {
+    display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0',
+    borderBottom: `1px solid ${T.border.subtle}`, fontSize: 11,
+  },
+  drawerTerm: { color: T.color.muted, wordBreak: 'break-word', flex: 1 },
+  drawerMetric: { color: T.color.dim, whiteSpace: 'nowrap', fontFamily: T.font.mono },
+  drawerEmpty: { color: T.color.dim, fontSize: 11, fontStyle: 'italic', fontFamily: T.font.mono },
 };
 
 function actionBtn(active, color = '#22c55e') {
@@ -155,7 +183,9 @@ function actionBtn(active, color = '#22c55e') {
 }
 
 // ── Score bar (mirrors CampaignTable / ScalingPlan health bar style) ───────────
-function ScoreBar({ score, color }) {
+// When the score has been capped for insufficient data, show a small "Capped"
+// tag so a product never visually looks scale-ready while its label disagrees.
+function ScoreBar({ score, color, capped }) {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{
@@ -164,19 +194,138 @@ function ScoreBar({ score, color }) {
         flexShrink: 0,
       }} />
       <span style={{ color, fontWeight: 700, fontSize: 12 }}>{score}</span>
+      {capped && (
+        <span
+          title="Score capped — not enough data yet to trust this number"
+          style={{
+            ...s.countPill, color: T.color.dim, background: 'transparent',
+            border: `1px solid ${T.border.subtle}`, fontSize: 9, padding: '1px 5px',
+          }}
+        >
+          Capped
+        </span>
+      )}
     </span>
   );
 }
 
+// Small count-pill cell. Zero counts render dim.
+function CountCell({ value, color }) {
+  const has = (value ?? 0) > 0;
+  return (
+    <td style={{ ...s.td, textAlign: 'center' }}>
+      <span style={{
+        ...s.countPill,
+        color:      has ? color : T.color.dim,
+        background: has ? `${color}18` : 'transparent',
+        border:     has ? `1px solid ${color}33` : `1px solid ${T.border.subtle}`,
+      }}>
+        {value ?? 0}
+      </span>
+    </td>
+  );
+}
+
+// ── Detail drawer ──────────────────────────────────────────────────────────────
+function DetailDrawer({ row, thresholds, colSpan }) {
+  const ins = row.insights;
+
+  return (
+    <tr>
+      <td colSpan={colSpan} style={{ padding: 0, borderBottom: `1px solid ${T.border.subtle}` }}>
+        <div style={s.drawer}>
+          {/* Suggested next action + reason */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ color: row.color, fontWeight: 700, fontSize: 13, fontFamily: T.font.heading, marginBottom: 4 }}>
+              Suggested next action
+            </div>
+            <div style={{ color: T.color.muted, fontSize: 12, marginBottom: 4 }}>{row.action}</div>
+            <div style={{ color: T.color.dim, fontSize: 11 }}>{row.reason}</div>
+            {ins && (
+              <div style={{ color: T.color.dim, fontSize: 11, marginTop: 6 }}>
+                Spend wasted with no sales:{' '}
+                <span style={{ color: row.spendWasted > 0 ? '#ef4444' : T.color.dim, fontWeight: 700 }}>
+                  {fmtCurrency(row.spendWasted)}
+                </span>
+                {' · '}ASIN-level rollup: {ins.suggestedAction}
+              </div>
+            )}
+          </div>
+
+          {!ins ? (
+            <div style={s.drawerEmpty}>
+              Upload a Search Term Report to see ASIN-level winning keywords, product targets, and negative candidates for this product.
+            </div>
+          ) : (
+            <div style={s.drawerGrid}>
+              {/* Top winning keywords */}
+              <div style={s.drawerCard}>
+                <div style={{ ...s.drawerTitle, color: T.color.cyan }}>
+                  Top Winning Keywords <span style={{ color: T.color.dim }}>({ins.winningKeywordsCount})</span>
+                </div>
+                {ins.topKeywords.length === 0 ? (
+                  <div style={s.drawerEmpty}>No winning keywords yet</div>
+                ) : ins.topKeywords.map((w, i) => (
+                  <div key={i} style={{ ...s.drawerRow, borderBottom: i === ins.topKeywords.length - 1 ? 'none' : s.drawerRow.borderBottom }}>
+                    <span style={s.drawerTerm}>{w.searchTerm ?? w.targeting}</span>
+                    <span style={s.drawerMetric}>
+                      {fmtNum(w.orders)} ord · {fmtPct(w.acos)} · {fmtRoas(w.roas)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Top winning product targets */}
+              <div style={s.drawerCard}>
+                <div style={{ ...s.drawerTitle, color: '#a855f7' }}>
+                  Top Winning Product Targets <span style={{ color: T.color.dim }}>({ins.winningTargetsCount})</span>
+                </div>
+                {ins.topTargets.length === 0 ? (
+                  <div style={s.drawerEmpty}>No winning ASIN targets yet</div>
+                ) : ins.topTargets.map((w, i) => (
+                  <div key={i} style={{ ...s.drawerRow, borderBottom: i === ins.topTargets.length - 1 ? 'none' : s.drawerRow.borderBottom }}>
+                    <span style={s.drawerTerm}>{w.searchTerm ?? w.targeting}</span>
+                    <span style={s.drawerMetric}>
+                      {fmtNum(w.orders)} ord · {fmtPct(w.acos)} · {fmtRoas(w.roas)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Negative keyword candidates */}
+              <div style={s.drawerCard}>
+                <div style={{ ...s.drawerTitle, color: '#ef4444' }}>
+                  Negative Candidates <span style={{ color: T.color.dim }}>({ins.negativeCount})</span>
+                </div>
+                {ins.negatives.length === 0 ? (
+                  <div style={s.drawerEmpty}>No wasted terms detected</div>
+                ) : ins.negatives.map((w, i) => (
+                  <div key={i} style={{ ...s.drawerRow, borderBottom: i === ins.negatives.length - 1 ? 'none' : s.drawerRow.borderBottom }}>
+                    <span style={s.drawerTerm}>{w.searchTerm ?? w.targeting}</span>
+                    <span style={s.drawerMetric}>
+                      {fmtCurrency(w.spend)} · {w.negType}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
-export default function ProductReadiness({ products, thresholds }) {
+export default function ProductReadiness({ products, searchTerms = [], thresholds }) {
   const [filterGroup, setFilterGroup] = useState('all');
   const [query,       setQuery]       = useState('');
   const [copied,      setCopied]      = useState(false);
+  const [expanded,    setExpanded]    = useState(() => new Set());
 
   const plan = useMemo(
-    () => buildReadinessPlan(products, thresholds),
-    [products, thresholds]
+    () => buildReadinessPlan(products, thresholds, searchTerms),
+    [products, thresholds, searchTerms]
   );
 
   const stats = useMemo(() => summariseReadiness(plan), [plan]);
@@ -201,6 +350,20 @@ export default function ProductReadiness({ products, thresholds }) {
     );
   }, [plan, filterGroup, query]);
 
+  const hasInsights = searchTerms.length > 0;
+
+  function rowId(row, i) {
+    return row.asin ?? row.sku ?? `idx-${i}`;
+  }
+
+  function toggleExpand(id) {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
   function handleCopy() {
     const text = buildSummaryText(plan, stats);
     const write = () => {
@@ -223,6 +386,9 @@ export default function ProductReadiness({ products, thresholds }) {
     document.body.removeChild(el);
     cb();
   }
+
+  // Total column count for drawer colSpan
+  const COL_COUNT = 13;
 
   // ── Empty state ──
   if (!products.length) {
@@ -251,6 +417,23 @@ export default function ProductReadiness({ products, thresholds }) {
           </div>
         )}
 
+        {hasInsights && (
+          <>
+            <div style={{ ...s.summaryCard, borderColor: `${T.color.cyan}33` }}>
+              <div style={s.summaryLabel}>Winning Keywords</div>
+              <div style={{ ...s.summaryValue, color: T.color.cyan }}>{stats.winningKeywordsTotal}</div>
+            </div>
+            <div style={{ ...s.summaryCard, borderColor: '#a855f733' }}>
+              <div style={s.summaryLabel}>Winning Targets</div>
+              <div style={{ ...s.summaryValue, color: '#a855f7' }}>{stats.winningTargetsTotal}</div>
+            </div>
+            <div style={{ ...s.summaryCard, borderColor: '#ef444433' }}>
+              <div style={s.summaryLabel}>Negative Candidates</div>
+              <div style={{ ...s.summaryValue, color: '#ef4444' }}>{stats.negativeCandidateTotal}</div>
+            </div>
+          </>
+        )}
+
         {stats.needsReviewCount > 0 && (
           <div style={{ ...s.summaryCard, borderColor: '#f9731633' }}>
             <div style={s.summaryLabel}>Needs Review</div>
@@ -265,18 +448,11 @@ export default function ProductReadiness({ products, thresholds }) {
           </div>
         )}
 
-        {stats.monitorCount > 0 && (
-          <div style={{ ...s.summaryCard, borderColor: `${T.color.cyan}33` }}>
-            <div style={s.summaryLabel}>Monitor</div>
-            <div style={{ ...s.summaryValue, color: T.color.cyan }}>{stats.monitorCount}</div>
-          </div>
-        )}
-
-        {stats.spendAtRisk > 0 && (
+        {(stats.spendAtRisk > 0 || stats.spendWastedTotal > 0) && (
           <div style={{ ...s.summaryCard, borderColor: '#ef444433' }}>
             <div style={s.summaryLabel}>Spend at Risk</div>
             <div style={{ ...s.summaryValue, color: '#ef4444', fontSize: 17 }}>
-              {fmtCurrency(stats.spendAtRisk)}
+              {fmtCurrency(hasInsights ? stats.spendWastedTotal : stats.spendAtRisk)}
             </div>
           </div>
         )}
@@ -362,105 +538,111 @@ export default function ProductReadiness({ products, thresholds }) {
           <table style={s.table}>
             <thead>
               <tr>
+                <th style={{ ...s.th, width: 28 }}></th>
                 <th style={{ ...s.th, minWidth: 140 }}>ASIN / SKU</th>
                 <th style={s.th}>Score</th>
                 <th style={s.th}>Readiness</th>
                 <th style={{ ...s.th, textAlign: 'right' }}>Spend</th>
                 <th style={{ ...s.th, textAlign: 'right' }}>Sales</th>
                 <th style={{ ...s.th, textAlign: 'right' }}>Orders</th>
-                <th style={{ ...s.th, textAlign: 'right' }}>Clicks</th>
                 <th style={{ ...s.th, textAlign: 'right' }}>ACoS</th>
                 <th style={{ ...s.th, textAlign: 'right' }}>ROAS</th>
-                <th style={{ ...s.th, textAlign: 'right' }}>CVR</th>
-                <th style={{ ...s.th, minWidth: 200 }}>Reason</th>
-                <th style={{ ...s.th, minWidth: 200 }}>Recommended Action</th>
+                <th style={{ ...s.th, textAlign: 'center' }} title="Winning keywords for this ASIN">Win KW</th>
+                <th style={{ ...s.th, textAlign: 'center' }} title="Winning product targets for this ASIN">Win Tgt</th>
+                <th style={{ ...s.th, textAlign: 'center' }} title="Negative keyword candidates for this ASIN">Neg</th>
+                <th style={{ ...s.th, textAlign: 'right' }}>Spend at Risk</th>
               </tr>
             </thead>
             <tbody>
               {displayRows.map((row, i) => {
-                const id = row.asin ?? row.sku ?? '—';
+                const id = rowId(row, i);
+                const isOpen = expanded.has(id);
                 return (
-                  <tr
-                    key={id + i}
-                    style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}
-                  >
-                    {/* ASIN / SKU */}
-                    <td style={{ ...s.td, fontFamily: T.font.mono, fontSize: 11, color: T.color.white }}>
-                      {row.asin && <div style={{ fontWeight: 600 }}>{row.asin}</div>}
-                      {row.sku  && <div style={{ color: T.color.dim, fontSize: 10 }}>{row.sku}</div>}
-                    </td>
+                  <React.Fragment key={id + i}>
+                    <tr
+                      style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', cursor: 'pointer' }}
+                      onClick={() => toggleExpand(id)}
+                    >
+                      {/* Expand chevron */}
+                      <td style={{ ...s.td, textAlign: 'center', color: T.color.dim }}>
+                        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </td>
 
-                    {/* Score bar */}
-                    <td style={s.td}>
-                      <ScoreBar score={row.score} color={row.color} />
-                    </td>
+                      {/* ASIN / SKU */}
+                      <td style={{ ...s.td, fontFamily: T.font.mono, fontSize: 11, color: T.color.white }}>
+                        {row.asin && <div style={{ fontWeight: 600 }}>{row.asin}</div>}
+                        {row.sku  && <div style={{ color: T.color.dim, fontSize: 10 }}>{row.sku}</div>}
+                      </td>
 
-                    {/* Readiness badge */}
-                    <td style={s.td}>
-                      <span style={{
-                        display: 'inline-block', padding: '2px 8px', borderRadius: 4,
-                        fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
-                        color: row.color, background: row.bg, border: `1px solid ${row.border}`,
+                      {/* Score bar */}
+                      <td style={s.td}>
+                        <ScoreBar score={row.score} color={row.color} capped={row.scoreCapped} />
+                      </td>
+
+                      {/* Readiness badge */}
+                      <td style={s.td}>
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+                          fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
+                          color: row.color, background: row.bg, border: `1px solid ${row.border}`,
+                        }}>
+                          {row.label}
+                        </span>
+                      </td>
+
+                      {/* Spend */}
+                      <td style={{ ...s.td, textAlign: 'right' }}>
+                        {fmtCurrency(row.totalSpend)}
+                      </td>
+
+                      {/* Sales */}
+                      <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
+                        {fmtCurrency(row.totalSales)}
+                      </td>
+
+                      {/* Orders */}
+                      <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
+                        {fmtNum(row.totalOrders, 0)}
+                      </td>
+
+                      {/* ACoS */}
+                      <td style={{
+                        ...s.td, textAlign: 'right', fontWeight: 600,
+                        color: row.avgAcos === 'NO_SALES'
+                          ? '#ef4444'
+                          : typeof row.avgAcos === 'number' && row.avgAcos <= thresholds.targetACoS
+                            ? '#22c55e' : '#f97316',
                       }}>
-                        {row.label}
-                      </span>
-                    </td>
+                        {row.avgAcos === 'NO_SALES' ? 'No Sales' : fmtPct(row.avgAcos)}
+                      </td>
 
-                    {/* Spend */}
-                    <td style={{ ...s.td, textAlign: 'right' }}>
-                      {fmtCurrency(row.totalSpend)}
-                    </td>
+                      {/* ROAS */}
+                      <td style={{
+                        ...s.td, textAlign: 'right',
+                        color: typeof row.avgRoas === 'number' && row.avgRoas >= thresholds.goodROASThreshold
+                          ? '#22c55e' : '#ccc',
+                      }}>
+                        {fmtRoas(row.avgRoas)}
+                      </td>
 
-                    {/* Sales */}
-                    <td style={{ ...s.td, textAlign: 'right', color: T.color.green, fontWeight: 600 }}>
-                      {fmtCurrency(row.totalSales)}
-                    </td>
+                      {/* ASIN-level counts */}
+                      <CountCell value={row.winningKeywordsCount} color={T.color.cyan} />
+                      <CountCell value={row.winningTargetsCount} color="#a855f7" />
+                      <CountCell value={row.negativeCandidatesCount} color="#ef4444" />
 
-                    {/* Orders */}
-                    <td style={{ ...s.td, textAlign: 'right', color: T.color.white, fontWeight: 700 }}>
-                      {fmtNum(row.totalOrders, 0)}
-                    </td>
+                      {/* Spend at risk */}
+                      <td style={{
+                        ...s.td, textAlign: 'right', fontWeight: 600,
+                        color: (row.spendWasted ?? 0) > 0 ? '#ef4444' : T.color.dim,
+                      }}>
+                        {fmtCurrency(row.spendWasted ?? 0)}
+                      </td>
+                    </tr>
 
-                    {/* Clicks */}
-                    <td style={{ ...s.td, textAlign: 'right' }}>
-                      {fmtNum(row.totalClicks, 0)}
-                    </td>
-
-                    {/* ACoS */}
-                    <td style={{
-                      ...s.td, textAlign: 'right', fontWeight: 600,
-                      color: row.avgAcos === 'NO_SALES'
-                        ? '#ef4444'
-                        : typeof row.avgAcos === 'number' && row.avgAcos <= thresholds.targetACoS
-                          ? '#22c55e' : '#f97316',
-                    }}>
-                      {row.avgAcos === 'NO_SALES' ? 'No Sales' : fmtPct(row.avgAcos)}
-                    </td>
-
-                    {/* ROAS */}
-                    <td style={{
-                      ...s.td, textAlign: 'right',
-                      color: typeof row.avgRoas === 'number' && row.avgRoas >= thresholds.goodROASThreshold
-                        ? '#22c55e' : '#ccc',
-                    }}>
-                      {fmtRoas(row.avgRoas)}
-                    </td>
-
-                    {/* CVR */}
-                    <td style={{ ...s.td, textAlign: 'right' }}>
-                      {fmtPct(row.avgCvr)}
-                    </td>
-
-                    {/* Reason */}
-                    <td style={{ ...s.td, color: T.color.dim, fontSize: 11, maxWidth: 220, whiteSpace: 'normal' }}>
-                      {row.reason}
-                    </td>
-
-                    {/* Recommended action */}
-                    <td style={{ ...s.td, color: T.color.dim, fontSize: 11, fontStyle: 'italic', maxWidth: 220, whiteSpace: 'normal' }}>
-                      {row.action}
-                    </td>
-                  </tr>
+                    {isOpen && (
+                      <DetailDrawer row={row} thresholds={thresholds} colSpan={COL_COUNT} />
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -475,8 +657,9 @@ export default function ProductReadiness({ products, thresholds }) {
           background: 'rgba(6,182,212,0.05)', border: `1px solid rgba(6,182,212,0.15)`,
           borderRadius: T.radius.sm, color: T.color.dim, fontSize: 11, fontFamily: T.font.mono,
         }}>
-          Readiness scores are for review only — no changes are made to Amazon Ads automatically.
-          Scores update automatically when you change threshold settings or upload new data.
+          Click any product row to expand its ASIN-level detail — top winning keywords, product targets, negative candidates,
+          and spend wasted. Scores now blend ASIN-level keyword/target performance{hasInsights ? '' : ' (upload a Search Term Report to activate)'}.
+          Review only — no changes are made to Amazon Ads automatically.
         </div>
       )}
     </div>

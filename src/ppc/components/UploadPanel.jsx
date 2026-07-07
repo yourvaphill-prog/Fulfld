@@ -91,15 +91,28 @@ const s = {
 export default function UploadPanel({ uploads, onUploadsChange }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   function genId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     return Math.random().toString(36).slice(2) + Date.now().toString(36);
   }
 
+  // Same filename + size is treated as the same file re-uploaded by mistake —
+  // replace the existing entry instead of stacking it, so totals don't double-count.
+  function fileSignature(file) {
+    return `${file.name.toLowerCase()}::${file.size}`;
+  }
+
+  function flashNotice(text) {
+    setNotice(text);
+    setTimeout(() => setNotice(prev => (prev === text ? null : prev)), 4000);
+  }
+
   function handleFiles(files) {
     for (const file of files) {
       if (!file.name.endsWith('.csv')) continue;
+      const signature = fileSignature(file);
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -109,21 +122,39 @@ export default function UploadPanel({ uploads, onUploadsChange }) {
           const normalized = normalizeRows(result.data);
           const enriched = enrichRows(normalized);
 
-          onUploadsChange(prev => [...prev, {
-            id: genId(),
-            filename: file.name,
-            reportType: detectedType,
-            headers,
-            rawRows: result.data,
-            rows: enriched,
-            rowCount: enriched.length,
-            error: result.errors.length ? result.errors[0].message : null,
-          }]);
+          // Decide from the current prop (not inside the setState updater below —
+          // calling another component's setState from within a state updater
+          // triggers React's "setState while rendering" warning).
+          if (uploads.some(u => u.signature === signature)) {
+            flashNotice(`"${file.name}" was already uploaded — replaced it instead of adding a duplicate.`);
+          }
+
+          onUploadsChange(prev => {
+            const dupIndex = prev.findIndex(u => u.signature === signature);
+            const entry = {
+              id: dupIndex >= 0 ? prev[dupIndex].id : genId(),
+              filename: file.name,
+              signature,
+              reportType: dupIndex >= 0 ? prev[dupIndex].reportType : detectedType,
+              headers,
+              rawRows: result.data,
+              rows: enriched,
+              rowCount: enriched.length,
+              error: result.errors.length ? result.errors[0].message : null,
+            };
+            if (dupIndex >= 0) {
+              const next = [...prev];
+              next[dupIndex] = entry;
+              return next;
+            }
+            return [...prev, entry];
+          });
         },
         error(err) {
           onUploadsChange(prev => [...prev, {
             id: genId(),
             filename: file.name,
+            signature,
             reportType: 'unknown',
             rows: [],
             rowCount: 0,
@@ -184,6 +215,12 @@ export default function UploadPanel({ uploads, onUploadsChange }) {
       <div style={s.hint}>
         Supports: Campaign Report, Search Term Report, Advertised Product Report
       </div>
+
+      {notice && (
+        <div style={{ color: '#eab308', fontSize: 11, fontFamily: T.font.mono, lineHeight: 1.4 }}>
+          {notice}
+        </div>
+      )}
 
       {uploads.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
