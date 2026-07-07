@@ -406,7 +406,7 @@ export default function PPCApp({ onSwitchModule }) {
           <>
             <div style={s.sectionTitle}>Product Performance</div>
             <div style={s.sectionSub}>Performance per advertised ASIN / SKU</div>
-            <ProductTable products={products} thresholds={thresholds} />
+            <ProductTable products={products} searchTerms={searchTerms} thresholds={thresholds} />
           </>
         );
 

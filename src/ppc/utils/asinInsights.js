@@ -31,6 +31,14 @@ function usd(v) {
   return typeof v === 'number' ? '$' + v.toFixed(2) : '$0.00';
 }
 
+/** Plain-language reason a term is classed as wasted spend (no orders, no sales). */
+function wastedReason(r) {
+  const clicks = r.clicks ?? 0;
+  const spend  = r.spend  ?? 0;
+  if (clicks === 0) return `${usd(spend)} spent, no clicks`;
+  return `${clicks} click${clicks !== 1 ? 's' : ''}, no orders`;
+}
+
 /**
  * Compute insights for a single ASIN's rows (already filtered + asin-stamped).
  *
@@ -44,23 +52,29 @@ export function buildAsinInsights(rows, thresholds) {
   const topTargets  = winners.filter(w => w.termType === 'asin');
   const negatives   = buildNegativeCandidates(rows, thresholds);
 
-  // Spend wasted = spend on terms that produced no orders and no sales.
-  const spendWasted = rows.reduce((sum, r) => {
-    const noSale = (r.orders ?? 0) === 0 && (r.sales ?? 0) === 0;
-    return noSale ? sum + (r.spend ?? 0) : sum;
-  }, 0);
+  // Terms that produced no orders and no sales. `spendWasted` sums their spend;
+  // `wastedTerms` is the itemised list (with a reason) for the detail drawer.
+  const noSaleRows = rows.filter(r => (r.orders ?? 0) === 0 && (r.sales ?? 0) === 0);
+  const spendWasted = noSaleRows.reduce((sum, r) => sum + (r.spend ?? 0), 0);
+  const wastedTerms = noSaleRows
+    .filter(r => (r.spend ?? 0) > 0 || (r.clicks ?? 0) > 0)
+    .map(r => ({ ...r, reason: wastedReason(r) }))
+    .sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
 
   const winningKeywordsCount = topKeywords.length;
   const winningTargetsCount  = topTargets.length;
   const negativeCount        = negatives.length;
+  const wastedCount          = wastedTerms.length;
 
   return {
     topKeywords:      topKeywords.slice(0, TOP_N),
     topTargets:       topTargets.slice(0, TOP_N),
     negatives:        negatives.slice(0, TOP_N),
+    wastedTerms:      wastedTerms.slice(0, TOP_N),
     winningKeywordsCount,
     winningTargetsCount,
     negativeCount,
+    wastedCount,
     spendWasted,
     suggestedAction: buildSuggestedAction({
       winningKeywordsCount,
